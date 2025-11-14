@@ -5,104 +5,231 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>SafeWave — Distress SOS</title>
 
-  <!-- Google Font -->
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;500;700;900&display=swap" rel="stylesheet">
+  <!-- Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&family=Playfair+Display:wght@500;700&display=swap" rel="stylesheet">
 
-  <!-- Leaflet CSS for map -->
+  <!-- Leaflet CSS -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
 
-  <!-- Font Awesome for icons -->
+  <!-- Font Awesome -->
   <script src="https://kit.fontawesome.com/a2d9b8f6d1.js" crossorigin="anonymous"></script>
 
-  <link rel="stylesheet" href="style.css">
   <style>
-    /* Small extra polish inlined so it works even if your style.css is minimal */
-    body { font-family: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial; background:#f6f8fb; color:#111; margin:0; }
-    .topbar{display:flex;align-items:center;justify-content:space-between;padding:14px 20px;background:linear-gradient(90deg,#0ea5a4,#3b82f6);color:white}
-    .topbar h1{margin:0;font-weight:700;font-size:20px}
-    .subtitle{font-weight:300;font-size:12px;opacity:.95}
-    .container{display:flex;gap:20px;padding:24px;max-width:1100px;margin:18px auto}
-    .left,.right{flex:1}
-    .card{background:white;border-radius:12px;padding:16px;box-shadow:0 6px 20px rgba(16,24,40,0.06);margin-bottom:18px}
-    .sos{background:#ff3b3b;color:white;border:none;padding:18px 28px;border-radius:10px;font-size:20px;cursor:pointer;box-shadow:0 6px 18px rgba(255,59,59,0.18)}
-    .smallbtn{background:#eef2ff;border:none;padding:8px 12px;border-radius:8px;cursor:pointer;margin-right:8px}
-    .row{display:flex;gap:8px;align-items:center;margin-top:12px}
-    .muted{color:#6b7280;font-size:13px;margin-top:8px}
-    input[type="text"],input[type="email"],input[type="tel"]{width:100%;padding:10px;border-radius:8px;border:1px solid #e6e9ef;margin-top:8px;box-sizing:border-box}
-    button.ghost{background:transparent;border:1px solid rgba(0,0,0,0.06);padding:8px 10px;border-radius:8px;cursor:pointer}
-    ul#contactsList{list-style:none;padding:0;margin:10px 0}
-    ul#contactsList li{display:flex;justify-content:space-between;padding:10px;border-radius:8px;border:1px solid #f0f3f7;margin-bottom:8px;align-items:center}
-    .logArea{max-height:140px;overflow:auto;padding:6px;background:#fbfdff;border-radius:8px;border:1px solid #eef2f6}
-    footer.footer{padding:12px;text-align:center;color:#6b7280}
-    .small-note{font-size:12px;color:#7b8794;margin-top:8px}
+    :root{
+      --bg-1: #0f172a; /* deep navy */
+      --glass: rgba(255,255,255,0.06);
+      --muted: #94a3b8;
+      --accent1: #ff6b6b; /* warm */
+      --accent2: #7c5cff; /* violet */
+      --accent3: #00d4ff; /* cyan */
+      --card-bg: rgba(255,255,255,0.03);
+      --glass-border: rgba(255,255,255,0.06);
+      --glass-strong: rgba(255,255,255,0.08);
+    }
+
+    /* Page */
+    html,body{height:100%}
+    body{
+      margin:0;
+      height:100%;
+      font-family:"Poppins",system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial;
+      background: radial-gradient(1200px 500px at 10% 10%, rgba(124,92,255,0.12), transparent),
+                  radial-gradient(900px 350px at 90% 90%, rgba(0,212,255,0.06), transparent),
+                  linear-gradient(180deg, #071025 0%, #071428 40%, #071428 100%);
+      color: #e6eef7;
+      -webkit-font-smoothing:antialiased;
+      -moz-osx-font-smoothing:grayscale;
+    }
+
+    /* Container */
+    .wrap{max-width:1200px;margin:28px auto;padding:24px;display:grid;grid-template-columns: 420px 1fr;gap:22px;align-items:start}
+
+    /* Header */
+    header.sitebar{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:12px}
+    .brand{
+      display:flex;gap:12px;align-items:center;
+    }
+    .logo{
+      width:56px;height:56px;border-radius:14px;
+      background: linear-gradient(135deg,var(--accent1),var(--accent2));
+      display:flex;align-items:center;justify-content:center;
+      box-shadow: 0 8px 30px rgba(124,92,255,0.18), inset 0 -6px 18px rgba(0,0,0,0.15);
+      font-weight:700;font-family:"Playfair Display",serif;font-size:18px;color:white;
+    }
+    .brand h1{margin:0;font-size:18px;font-weight:700}
+    .brand p{margin:0;font-size:12px;color:var(--muted)}
+
+    .top-actions{display:flex;gap:10px;align-items:center}
+    .icon-btn{background:transparent;border:1px solid rgba(255,255,255,0.04);padding:10px;border-radius:10px;color:var(--muted);cursor:pointer}
+    .icon-btn:hover{transform:translateY(-3px);box-shadow:0 8px 30px rgba(0,0,0,0.35)}
+
+    /* Left column cards */
+    .panel{background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));border:1px solid var(--glass-border);backdrop-filter: blur(8px);border-radius:14px;padding:18px;box-shadow: 0 10px 30px rgba(2,6,23,0.6)}
+    .muted{color:var(--muted);font-size:13px}
+
+    /* SOS card */
+    .sos-card h2{margin:0 0 6px 0;font-size:18px}
+    .sos-wrap{display:flex;flex-direction:column;gap:12px}
+    .sos-btn{
+      display:inline-flex;align-items:center;gap:12px;
+      background: linear-gradient(90deg,var(--accent1),#ff9f80);
+      border:none;padding:16px 20px;border-radius:12px;color:white;font-weight:700;font-size:20px;
+      box-shadow: 0 18px 40px rgba(255,106,106,0.12), 0 6px 20px rgba(0,0,0,0.4);
+      cursor:pointer;transition:transform .15s ease, box-shadow .15s ease;
+    }
+    .sos-btn .dot{width:12px;height:12px;border-radius:50%;background:#fff;box-shadow:0 6px 18px rgba(255,255,255,0.14)}
+    .sos-btn:active{transform:scale(.98)}
+    .sos-controls{display:flex;gap:8px;align-items:center}
+
+    /* Contacts card */
+    .contacts-grid{display:flex;flex-direction:column;gap:12px}
+    .contact-form-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+    label{font-size:12px;color:var(--muted);display:block;margin-top:6px}
+    .input{
+      background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+      border:1px solid rgba(255,255,255,0.04);padding:10px;border-radius:10px;color:#eef7ff;
+    }
+    .btn-primary{background:linear-gradient(90deg,var(--accent2),var(--accent3));border:none;padding:10px 14px;border-radius:10px;color:white;cursor:pointer}
+    .btn-ghost{background:transparent;border:1px solid rgba(255,255,255,0.04);color:var(--muted);padding:10px;border-radius:10px;cursor:pointer}
+
+    ul#contactsList{list-style:none;padding:0;margin:8px 0;display:flex;flex-direction:column;gap:8px;}
+    ul#contactsList li{display:flex;align-items:center;justify-content:space-between;padding:12px;border-radius:10px;border:1px solid rgba(255,255,255,0.03);background:linear-gradient(180deg, rgba(255,255,255,0.01), transparent)}
+    .contact-meta{display:flex;flex-direction:column}
+    .contact-meta .name{font-weight:600;color:#fff}
+    .contact-meta .sub{color:var(--muted);font-size:13px;margin-top:4px}
+
+    /* Right column */
+    .right-col{display:grid;grid-template-rows:1fr auto;gap:16px}
+    #map{height:420px;border-radius:12px;border:1px solid rgba(255,255,255,0.04);overflow:hidden}
+    .logArea{max-height:220px;overflow:auto;padding:12px;background:linear-gradient(180deg,rgba(255,255,255,0.01),transparent);border-radius:10px;border:1px solid rgba(255,255,255,0.03);font-size:13px;color:var(--muted)}
+
+    /* footer */
+    footer{margin-top:12px;text-align:center;color:var(--muted);font-size:13px}
+
+    /* small responsive */
+    @media (max-width:980px){
+      .wrap{grid-template-columns:1fr; padding:18px}
+      #map{height:300px}
+    }
+
+    /* subtle animations */
+    .pulse {
+      display:inline-block;width:8px;height:8px;border-radius:50%;
+      background:rgba(255,255,255,0.95); box-shadow:0 0 0 6px rgba(255,107,107,0.12);
+      animation: pulse 1.6s infinite;
+    }
+    @keyframes pulse {
+      0% { transform:scale(.95); opacity:1 }
+      70% { transform:scale(1.6); opacity:0 }
+      100% { transform:scale(.95); opacity:0 }
+    }
+
+    /* focus outlines */
+    .input:focus{outline:none;box-shadow:0 8px 30px rgba(124,92,255,0.06);border-color:rgba(124,92,255,0.6)}
+    .btn-primary:focus{outline:none;box-shadow:0 10px 30px rgba(124,92,255,0.12)}
   </style>
 </head>
 <body>
-  <header class="topbar">
-    <h1>SafeWave <span class="subtitle">— Mobile distress & alert</span></h1>
-    <div>
-      <button id="testCallBtn" class="smallbtn" title="Manually trigger a test call">Test Call</button>
-      <button id="adminBtn" class="ghost">Admin</button>
-    </div>
-  </header>
-
-  <main class="container" role="main">
-    <section class="left">
-      <div class="card sos-card" aria-labelledby="emergency-heading">
-        <h2 id="emergency-heading">Emergency</h2>
-        <p class="muted">One big button to call for help</p>
-        <button id="sosBtn" class="sos" aria-label="Send SOS">SOS <span class="pulse" aria-hidden="true"></span></button>
-
-        <div class="row small">
-          <button id="alarmBtn" class="smallbtn" title="Play alarm"><i class="fa-solid fa-bell"></i> Alarm</button>
-          <button id="shareLocBtn" class="smallbtn" title="Share your location"><i class="fa-solid fa-location-dot"></i> Share Location</button>
-          <button id="cancelBtn" class="ghost" style="display:none">Cancel</button>
+  <div class="wrap">
+    <header class="sitebar" style="grid-column:1 / -1">
+      <div class="brand">
+        <div class="logo">SW</div>
+        <div>
+          <h1>SafeWave</h1>
+          <p>Mobile distress & alert — demo</p>
         </div>
-        <p class="small-note">Tip: Allow browser location to include coordinates in the alert.</p>
       </div>
 
-      <div class="card contacts-card" aria-labelledby="contacts-heading">
-        <h3 id="contacts-heading">Emergency Contacts</h3>
+      <div class="top-actions">
+        <button id="testCallBtn" class="icon-btn" title="Trigger test call"><i class="fa-solid fa-phone"></i></button>
+        <button id="adminBtn" class="icon-btn" title="Open admin logs"><i class="fa-solid fa-list"></i></button>
+      </div>
+    </header>
 
-        <!-- Contact form: name, email (optional), phone (required) -->
-        <form id="contactForm" autocomplete="off">
-          <label for="name">Name</label>
-          <input id="name" name="name" type="text" placeholder="Ex: Mom" required />
+    <!-- LEFT COLUMN -->
+    <section>
+      <div class="panel sos-card">
+        <div style="display:flex;align-items:center;justify-content:space-between">
+          <div>
+            <h2 style="margin:0 0 6px 0">Emergency</h2>
+            <div class="muted">One tap to alert your contacts</div>
+          </div>
+          <div style="text-align:right;color:var(--muted);font-size:13px">v1.0 • Demo</div>
+        </div>
 
-          <label for="email">Email (optional)</label>
-          <input id="email" name="email" type="email" placeholder="example@domain.com" />
+        <div style="margin-top:16px" class="sos-wrap">
+          <button id="sosBtn" class="sos-btn" aria-label="Send SOS">
+            <span style="display:inline-flex;align-items:center;gap:10px">
+              <span style="width:12px;height:12px;border-radius:4px;background:rgba(255,255,255,0.12);display:inline-flex;align-items:center;justify-content:center">
+                <i class="fa-solid fa-triangle-exclamation" style="color:var(--accent1);font-size:12px"></i>
+              </span>
+              SOS
+            </span>
+            <span class="dot" aria-hidden="true"></span>
+          </button>
 
-          <label for="phone">Phone (required)</label>
-          <input id="phone" name="phone" type="tel" placeholder="+91XXXXXXXXXX" required />
+          <div class="sos-controls" style="margin-top:8px;">
+            <button id="alarmBtn" class="btn-ghost"><i class="fa-solid fa-bell"></i> Alarm</button>
+            <button id="shareLocBtn" class="btn-ghost"><i class="fa-solid fa-location-dot"></i> Share Location</button>
+            <button id="cancelBtn" class="btn-ghost" style="display:none">Cancel</button>
+          </div>
 
-          <div class="row">
-            <button type="submit">Add Contact</button>
-            <button id="clearContacts" type="button" class="ghost">Clear All</button>
+          <div class="muted" style="margin-top:8px">Allow location on prompt so the alert includes coordinates.</div>
+        </div>
+      </div>
+
+      <div class="panel contacts-card" style="margin-top:14px;">
+        <h3 style="margin:0 0 6px 0">Emergency Contacts</h3>
+        <div class="muted" style="margin-bottom:8px">Add people who should get an alert and a call.</div>
+
+        <form id="contactForm" class="contacts-grid" autocomplete="off">
+          <div class="contact-form-row">
+            <div>
+              <label for="name">Name</label>
+              <input id="name" class="input" name="name" type="text" placeholder="Ex: Mom" required />
+            </div>
+            <div>
+              <label for="phone">Phone</label>
+              <input id="phone" class="input" name="phone" type="tel" placeholder="+91XXXXXXXXXX" required />
+            </div>
+          </div>
+
+          <div>
+            <label for="email">Email (optional)</label>
+            <input id="email" class="input" name="email" type="email" placeholder="example@domain.com" />
+          </div>
+
+          <div style="display:flex;gap:8px;margin-top:8px">
+            <button type="submit" class="btn-primary">Add Contact</button>
+            <button id="clearContacts" type="button" class="btn-ghost">Clear All</button>
           </div>
         </form>
 
-        <ul id="contactsList" aria-live="polite" aria-label="Saved contacts"></ul>
-        <p class="muted">Store phone numbers in E.164 format (e.g. +919876543210) for calling.</p>
+        <ul id="contactsList"></ul>
+        <div class="muted" style="margin-top:8px">Use E.164 format (+countrycode). Example: +919876543210</div>
       </div>
     </section>
 
-    <section class="right">
-      <div class="card map-card" aria-labelledby="map-heading">
-        <h3 id="map-heading">Live Location</h3>
-        <div id="map" style="height:320px;border-radius:12px;"></div>
-        <p id="coords" class="muted">Location: Not shared yet</p>
+    <!-- RIGHT COLUMN -->
+    <section class="right-col">
+      <div class="panel" style="padding:12px 12px 16px 12px">
+        <h3 style="margin:0 0 8px 0">Live Location</h3>
+        <div id="map"></div>
+        <p id="coords" class="muted" style="margin-top:10px">Location: Not shared yet</p>
       </div>
 
-      <div class="card log-card" aria-labelledby="log-heading">
-        <h3 id="log-heading">Event Log</h3>
-        <div id="logArea" class="logArea" role="log" aria-live="polite"></div>
+      <div class="panel" style="padding:12px">
+        <h3 style="margin:0 0 8px 0">Event Log</h3>
+        <div id="logArea" class="logArea"></div>
+        <div style="display:flex;justify-content:space-between;margin-top:10px">
+          <small class="muted">Activity and debug</small>
+          <small class="muted">Local only</small>
+        </div>
       </div>
     </section>
-  </main>
+  </div>
 
-  <footer class="footer">
-    <small>Built for mini project — SafeWave</small>
-  </footer>
+  <footer style="text-align:center;padding:14px;color:var(--muted);font-size:13px">Built for mini project — SafeWave</footer>
 
   <!-- Alarm audio -->
   <audio id="alarmAudio" src="alarm.mp3" preload="auto"></audio>
@@ -113,32 +240,7 @@
   <!-- EmailJS SDK -->
   <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
 
-  <!-- Your app script (keeps app.js separate so it's easy to edit) -->
+  <!-- App script (unchanged ids so your existing app.js works) -->
   <script src="app.js"></script>
-
-  <script>
-    // tiny helper: wire the Test Call button to open a prompt so you can quickly test
-    document.getElementById('testCallBtn').addEventListener('click', async () => {
-      const number = prompt('Enter phone number to test (E.164 format, e.g. +919876543210):');
-      if (!number) return;
-      try {
-        const resp = await fetch('/.netlify/functions/call', { // when local testing, this will route; in deployed site replace with full URL if cross-site
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            to: [number],
-            message: 'Test call from SafeWave',
-            from_name: 'SafeWave Demo'
-          })
-        });
-        const json = await resp.json();
-        console.log('CALL RESPONSE', json);
-        alert('Call response: ' + (json.ok ? 'Sent' : (json.error || 'Failed')));
-      } catch (e) {
-        console.error('CALL ERROR', e);
-        alert('Call request failed (check console / function URL)');
-      }
-    });
-  </script>
 </body>
 </html>
