@@ -1,4 +1,10 @@
 // ==========================
+//  Configuration (change this URL to your function's URL if needed)
+// ==========================
+const CALL_FUNCTION_URL = 'https://spiffy-beijinho-aed172.netlify.app/.netlify/functions/call'; 
+// If your function is hosted on the same Netlify site, you can use '/.netlify/functions/call'
+
+// ==========================
 //  EmailJS Initialization
 // ==========================
 (function () {
@@ -21,6 +27,8 @@ const log = (text) => {
 // ==========================
 let map, marker;
 let currentCoords = null;
+let sosTimer = null;        // cancelable timer
+let sosInProgress = false;
 
 // ==========================
 //  MAP SETUP
@@ -108,8 +116,9 @@ function renderContacts() {
     const li = document.createElement('li');
     li.innerHTML = `
       <div>
-        <strong>${c.name}</strong>
-        <div class="muted">${c.email}</div>
+        <strong>${escapeHtml(c.name)}</strong>
+        <div class="muted">Email: ${c.email ? escapeHtml(c.email) : '—'}</div>
+        <div class="muted">Phone: ${c.phone ? escapeHtml(c.phone) : '—'}</div>
       </div>
       <div>
         <button data-i="${i}" class="ghost removeBtn">Remove</button>
@@ -129,27 +138,196 @@ function renderContacts() {
   });
 }
 
+// small helper to avoid accidental HTML injection in rendered values
+function escapeHtml(str = '') {
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/"/g, '&quot;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;');
+}
+
 // ==========================
-//  MAIN LOGIC
+//  TRIGGER CALLS (Netlify -> Twilio)
+// ==========================
+async function triggerCalls(phoneRecipients, currentCoordsParam) {
+  if (!phoneRecipients || phoneRecipients.length === 0) { 
+    log('No phone numbers to call'); 
+    return { ok: false, error: 'no recipients' };
+  }
+
+  try {
+    const resp = await fetch(CALL_FUNCTION_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        to: phoneRecipients,
+        message: `I need help. Location: ${currentCoordsParam ? currentCoordsParam.lat + ',' + currentCoordsParam.lon : 'Not available'}`,
+        from_name: 'SafeWave User'
+      })
+    });
+
+    const json = await resp.json();
+    if (resp.ok) {
+      log(`Call requests sent to ${phoneRecipients.length} number(s)`);
+      return json;
+    } else {
+      log('Call function returned error: ' + (json.error || resp.status));
+      return json;
+    }
+  } catch (err) {
+    console.error('Call error', err);
+    log('Call request failed: see console');
+    return { ok: false, error: err.message || err };
+  }
+}
+
+// ==========================
+//  SOS FLOW
+// ==========================
+async function performAlertSequence() {
+  // 1) Wait for location (already done prior to calling this in most flows, but ensure)
+  await shareLocation(true);
+
+  // 2) Play alarm (visual + audio)
+  playAlarm();
+
+  // 3) Email
+  const contacts = loadContacts();
+  let emails = contacts.map(c => c.email).filter(Boolean);
+  if (emails.length) {
+    const emailsStr = emails.join(',');
+    const template_params = {
+      to_email: emailsStr,
+      from_name: 'SafeWave User',
+      message: 'I need help. Please reach out as soon as possible.',
+      lat: currentCoords ? currentCoords.lat : 'Not available',
+      lon: currentCoords ? currentCoords.lon : 'Not available',
+      time: new Date().toLocaleString()
+    };
+
+    try {
+      await emailjs.send('service_hf9wccx', 'template_7wjlod7', template_params);
+      log('Alert emailed to contacts: ' + emailsStr);
+    } catch (err) {
+      console.error('EmailJS error', err);
+      log('Email send failed');
+    }
+  } else {
+    log('No emails saved to notify');
+  }
+
+  // 4) Calls (Twilio via Netlify function) - phone numbers in E.164
+  const phoneRecipients = contacts.map(c => c.phone).filter(Boolean);
+  if (phoneRecipients.length) {
+    const callResult = await triggerCalls(phoneRecipients, currentCoords);
+    if (callResult && callResult.ok) {
+      // optional: show a nicer UI message
+      log('Call(s) initiated successfully');
+    } else {
+      log('Call(s) failed: ' + (callResult && callResult.error ? callResult.error : 'unknown'));
+    }
+  } else {
+    log('No phone numbers saved to call');
+  }
+
+  // 5) Final log entry
+  log('SOS sequence completed');
+}
+
+// ==========================
+//  CANCELABLE SOS (5s window)
+// ==========================
+function startCancelableSOS() {
+  if (sosInProgress) return;
+  sosInProgress = true;
+  $('sosBtn').disabled = true;
+  $('cancelBtn').style.display = 'inline-block';
+  log('SOS initiated — you have 5 seconds to cancel');
+
+  // clear any existing timer
+  if (sosTimer) clearTimeout(sosTimer);
+
+  sosTimer = setTimeout(async () => {
+    $('cancelBtn').style.display = 'none';
+    $('sosBtn').disabled = false;
+    sosInProgress = false;
+    await performAlertSequence();
+  }, 5000); // 5 seconds
+}
+
+function cancelSOS() {
+  if (!sosInProgress) return;
+  clearTimeout(sosTimer);
+  sosTimer = null;
+  sosInProgress = false;
+  $('sosBtn').disabled = false;
+  $('cancelBtn').style.display = 'none';
+  log('SOS canceled by user');
+}
+
+// ==========================
+//  Test call helper
+// ==========================
+async function triggerTestCall(number) {
+  if (!number) return;
+  try {
+    const resp = await fetch(CALL_FUNCTION_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        to: [number],
+        message: 'Test call from SafeWave',
+        from_name: 'SafeWave Demo'
+      })
+    });
+    const json = await resp.json();
+    console.log('CALL RESPONSE', json);
+    alert('Test call response: ' + (json.ok ? 'Sent' : (json.error || 'Failed')));
+    log('Test call result: ' + (json.ok ? 'OK' : (json.error || 'Failed')));
+  } catch (err) {
+    console.error('Test call error', err);
+    alert('Test call failed (see console)');
+    log('Test call failed');
+  }
+}
+
+// ==========================
+//  MAIN LOGIC (DOM READY)
 // ==========================
 document.addEventListener('DOMContentLoaded', () => {
+  // initialize map and contacts UI
   initMap();
   renderContacts();
 
-  // Add contacts
+  // Contact form submit -> save name, email, phone
   $('contactForm').onsubmit = e => {
     e.preventDefault();
     const name = $('name').value.trim();
     const email = $('email').value.trim();
-    if (!name || !email) return;
+    const phone = $('phone').value.trim();
+
+    // basic validation
+    if (!name) { alert('Please enter name'); return; }
+    if (!phone) { alert('Please enter phone in +countryformat'); return; }
+    // simple E.164-ish check (not exhaustive)
+    if (!/^\+?\d{7,15}$/.test(phone.replace(/\s+/g, ''))) {
+      alert('Please enter a valid phone number with country code (e.g. +919876543210)');
+      return;
+    }
+
     const list = loadContacts();
-    list.push({ name, email });
+    list.push({ name, email, phone });
     saveContacts(list);
+
     $('name').value = '';
     $('email').value = '';
+    $('phone').value = '';
+
     log('Contact added: ' + name);
   };
 
+  // Clear contacts
   $('clearContacts').onclick = () => {
     if (confirm('Clear all contacts?')) {
       localStorage.removeItem(CONTACTS_KEY);
@@ -158,59 +336,31 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   };
 
-  // Button actions
+  // Buttons: share location & alarm
   $('shareLocBtn').onclick = () => shareLocation(true);
   $('alarmBtn').onclick = () => playAlarm();
 
-  // ==========================
-  //  SOS BUTTON (FULLY FIXED)
-  // ==========================
-  $('sosBtn').onclick = async () => {
-    // 1) Wait for location to load completely
-    await shareLocation(true);
+  // SOS flow: start cancelable SOS (5s window)
+  $('sosBtn').onclick = () => startCancelableSOS();
+  $('cancelBtn').onclick = () => cancelSOS();
 
-    // 2) Play alarm
-    playAlarm();
+  // Test call button (in header)
+  const testBtn = $('testCallBtn');
+  if (testBtn) {
+    testBtn.onclick = async () => {
+      const num = prompt('Enter phone number to test (E.164, e.g. +919876543210):');
+      if (!num) return;
+      await triggerTestCall(num.trim());
+    };
+  }
 
-    // 3) Prepare sending email
-    const contacts = loadContacts();
-    if (contacts.length) {
-      const emails = contacts.map(c => c.email).join(',');
-
-      const template_params = {
-        to_email: emails, 
-        from_name: 'SafeWave User',
-        message: 'I need help. Please reach out as soon as possible.',
-        lat: currentCoords ? currentCoords.lat : 'Not available',
-        lon: currentCoords ? currentCoords.lon : 'Not available',
-        time: new Date().toLocaleString()
-      };
-
-      try {
-        await emailjs.send('service_hf9wccx', 'template_7wjlod7', template_params);
-        log('Alert sent to contacts');
-        alert('✅ Alert emailed to emergency contacts!');
-      } catch (err) {
-        console.error(err);
-        log('Could not send email');
-        alert('❌ Failed to send email. Check console.');
-      }
-    } else {
-      log('No contacts');
-      alert('Add emergency contacts first.');
-    }
-
-    // 4) Log SOS
-    log('SOS triggered');
-  };
-
-  // Admin View
+  // Admin view for logs
   $('adminBtn').onclick = () => {
     alert(
       'Event log:\n\n' +
         Array.from(document.querySelectorAll('#logArea div'))
           .map(d => d.textContent)
-          .slice(0, 15)
+          .slice(0, 30)
           .join('\n')
     );
   };

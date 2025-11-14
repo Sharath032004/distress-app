@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Distress SOS</title>
+  <title>SafeWave — Distress SOS</title>
 
   <!-- Google Font -->
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;500;700;900&display=swap" rel="stylesheet">
@@ -15,49 +15,87 @@
   <script src="https://kit.fontawesome.com/a2d9b8f6d1.js" crossorigin="anonymous"></script>
 
   <link rel="stylesheet" href="style.css">
+  <style>
+    /* Small extra polish inlined so it works even if your style.css is minimal */
+    body { font-family: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial; background:#f6f8fb; color:#111; margin:0; }
+    .topbar{display:flex;align-items:center;justify-content:space-between;padding:14px 20px;background:linear-gradient(90deg,#0ea5a4,#3b82f6);color:white}
+    .topbar h1{margin:0;font-weight:700;font-size:20px}
+    .subtitle{font-weight:300;font-size:12px;opacity:.95}
+    .container{display:flex;gap:20px;padding:24px;max-width:1100px;margin:18px auto}
+    .left,.right{flex:1}
+    .card{background:white;border-radius:12px;padding:16px;box-shadow:0 6px 20px rgba(16,24,40,0.06);margin-bottom:18px}
+    .sos{background:#ff3b3b;color:white;border:none;padding:18px 28px;border-radius:10px;font-size:20px;cursor:pointer;box-shadow:0 6px 18px rgba(255,59,59,0.18)}
+    .smallbtn{background:#eef2ff;border:none;padding:8px 12px;border-radius:8px;cursor:pointer;margin-right:8px}
+    .row{display:flex;gap:8px;align-items:center;margin-top:12px}
+    .muted{color:#6b7280;font-size:13px;margin-top:8px}
+    input[type="text"],input[type="email"],input[type="tel"]{width:100%;padding:10px;border-radius:8px;border:1px solid #e6e9ef;margin-top:8px;box-sizing:border-box}
+    button.ghost{background:transparent;border:1px solid rgba(0,0,0,0.06);padding:8px 10px;border-radius:8px;cursor:pointer}
+    ul#contactsList{list-style:none;padding:0;margin:10px 0}
+    ul#contactsList li{display:flex;justify-content:space-between;padding:10px;border-radius:8px;border:1px solid #f0f3f7;margin-bottom:8px;align-items:center}
+    .logArea{max-height:140px;overflow:auto;padding:6px;background:#fbfdff;border-radius:8px;border:1px solid #eef2f6}
+    footer.footer{padding:12px;text-align:center;color:#6b7280}
+    .small-note{font-size:12px;color:#7b8794;margin-top:8px}
+  </style>
 </head>
 <body>
   <header class="topbar">
     <h1>SafeWave <span class="subtitle">— Mobile distress & alert</span></h1>
-    <button id="adminBtn" class="ghost">Admin</button>
+    <div>
+      <button id="testCallBtn" class="smallbtn" title="Manually trigger a test call">Test Call</button>
+      <button id="adminBtn" class="ghost">Admin</button>
+    </div>
   </header>
 
-  <main class="container">
+  <main class="container" role="main">
     <section class="left">
-      <div class="card sos-card">
-        <h2>Emergency</h2>
+      <div class="card sos-card" aria-labelledby="emergency-heading">
+        <h2 id="emergency-heading">Emergency</h2>
         <p class="muted">One big button to call for help</p>
-        <button id="sosBtn" class="sos">SOS <span class="pulse"></span></button>
+        <button id="sosBtn" class="sos" aria-label="Send SOS">SOS <span class="pulse" aria-hidden="true"></span></button>
+
         <div class="row small">
-          <button id="alarmBtn" class="smallbtn"><i class="fa-solid fa-bell"></i> Alarm</button>
-          <button id="shareLocBtn" class="smallbtn"><i class="fa-solid fa-location-dot"></i> Share Location</button>
+          <button id="alarmBtn" class="smallbtn" title="Play alarm"><i class="fa-solid fa-bell"></i> Alarm</button>
+          <button id="shareLocBtn" class="smallbtn" title="Share your location"><i class="fa-solid fa-location-dot"></i> Share Location</button>
+          <button id="cancelBtn" class="ghost" style="display:none">Cancel</button>
         </div>
+        <p class="small-note">Tip: Allow browser location to include coordinates in the alert.</p>
       </div>
 
-      <div class="card contacts-card">
-        <h3>Emergency Contacts</h3>
-        <form id="contactForm">
-          <input id="name" placeholder="Name" required/>
-          <input id="email" placeholder="Email" type="email" required/>
+      <div class="card contacts-card" aria-labelledby="contacts-heading">
+        <h3 id="contacts-heading">Emergency Contacts</h3>
+
+        <!-- Contact form: name, email (optional), phone (required) -->
+        <form id="contactForm" autocomplete="off">
+          <label for="name">Name</label>
+          <input id="name" name="name" type="text" placeholder="Ex: Mom" required />
+
+          <label for="email">Email (optional)</label>
+          <input id="email" name="email" type="email" placeholder="example@domain.com" />
+
+          <label for="phone">Phone (required)</label>
+          <input id="phone" name="phone" type="tel" placeholder="+91XXXXXXXXXX" required />
+
           <div class="row">
-            <button type="submit">Add</button>
+            <button type="submit">Add Contact</button>
             <button id="clearContacts" type="button" class="ghost">Clear All</button>
           </div>
         </form>
-        <ul id="contactsList"></ul>
+
+        <ul id="contactsList" aria-live="polite" aria-label="Saved contacts"></ul>
+        <p class="muted">Store phone numbers in E.164 format (e.g. +919876543210) for calling.</p>
       </div>
     </section>
 
     <section class="right">
-      <div class="card map-card">
-        <h3>Live Location</h3>
+      <div class="card map-card" aria-labelledby="map-heading">
+        <h3 id="map-heading">Live Location</h3>
         <div id="map" style="height:320px;border-radius:12px;"></div>
         <p id="coords" class="muted">Location: Not shared yet</p>
       </div>
 
-      <div class="card log-card">
-        <h3>Event Log</h3>
-        <div id="logArea" class="logArea"></div>
+      <div class="card log-card" aria-labelledby="log-heading">
+        <h3 id="log-heading">Event Log</h3>
+        <div id="logArea" class="logArea" role="log" aria-live="polite"></div>
       </div>
     </section>
   </main>
@@ -75,6 +113,32 @@
   <!-- EmailJS SDK -->
   <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
 
+  <!-- Your app script (keeps app.js separate so it's easy to edit) -->
   <script src="app.js"></script>
+
+  <script>
+    // tiny helper: wire the Test Call button to open a prompt so you can quickly test
+    document.getElementById('testCallBtn').addEventListener('click', async () => {
+      const number = prompt('Enter phone number to test (E.164 format, e.g. +919876543210):');
+      if (!number) return;
+      try {
+        const resp = await fetch('/.netlify/functions/call', { // when local testing, this will route; in deployed site replace with full URL if cross-site
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            to: [number],
+            message: 'Test call from SafeWave',
+            from_name: 'SafeWave Demo'
+          })
+        });
+        const json = await resp.json();
+        console.log('CALL RESPONSE', json);
+        alert('Call response: ' + (json.ok ? 'Sent' : (json.error || 'Failed')));
+      } catch (e) {
+        console.error('CALL ERROR', e);
+        alert('Call request failed (check console / function URL)');
+      }
+    });
+  </script>
 </body>
 </html>
