@@ -1,0 +1,11 @@
+{
+  "name": "safe-wave",
+  "version": "1.0.0",
+  "private": true,
+  "engines": {
+    "node": "18"
+  },
+  "dependencies": {
+    "twilio": "^4.0.0"
+  }
+}

@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Distress SOS</title>
+
+  <!-- Google Font -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;500;700;900&display=swap" rel="stylesheet">
+
+  <!-- Leaflet CSS for map -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+
+  <!-- Font Awesome for icons -->
+  <script src="https://kit.fontawesome.com/a2d9b8f6d1.js" crossorigin="anonymous"></script>
+
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="topbar">
+    <h1>SafeWave <span class="subtitle">— Mobile distress & alert</span></h1>
+    <button id="adminBtn" class="ghost">Admin</button>
+  </header>
+
+  <main class="container">
+    <section class="left">
+      <div class="card sos-card">
+        <h2>Emergency</h2>
+        <p class="muted">One big button to call for help</p>
+        <button id="sosBtn" class="sos">SOS <span class="pulse"></span></button>
+        <div class="row small">
+          <button id="alarmBtn" class="smallbtn"><i class="fa-solid fa-bell"></i> Alarm</button>
+          <button id="shareLocBtn" class="smallbtn"><i class="fa-solid fa-location-dot"></i> Share Location</button>
+        </div>
+      </div>
+
+      <div class="card contacts-card">
+        <h3>Emergency Contacts</h3>
+        <form id="contactForm">
+          <input id="name" placeholder="Name" required/>
+          <input id="email" placeholder="Email" type="email" required/>
+          <div class="row">
+            <button type="submit">Add</button>
+            <button id="clearContacts" type="button" class="ghost">Clear All</button>
+          </div>
+        </form>
+        <ul id="contactsList"></ul>
+      </div>
+    </section>
+
+    <section class="right">
+      <div class="card map-card">
+        <h3>Live Location</h3>
+        <div id="map" style="height:320px;border-radius:12px;"></div>
+        <p id="coords" class="muted">Location: Not shared yet</p>
+      </div>
+
+      <div class="card log-card">
+        <h3>Event Log</h3>
+        <div id="logArea" class="logArea"></div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <small>Built for mini project — SafeWave</small>
+  </footer>
+
+  <!-- Alarm audio -->
+  <audio id="alarmAudio" src="alarm.mp3" preload="auto"></audio>
+
+  <!-- Leaflet JS -->
+  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+
+  <!-- EmailJS SDK -->
+  <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
+
+  <script src="app.js"></script>
+</body>
+</html>

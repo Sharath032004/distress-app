@@ -1,0 +1,6 @@
+[build]
+  publish = "."
+  functions = "functions"
+
+[dev]
+  command = "npm run start"
