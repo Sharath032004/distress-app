@@ -1,14 +1,17 @@
 // ==========================
 //  Configuration
 // ==========================
-const CALL_FUNCTION_URL = 'https://saheli-the-distress-sos.netlify.app/.netlify/functions/call'; 
-// If your function is on the same Netlify site, you may use '/.netlify/functions/call'
+// Default uses a relative path so the function call originates from the same origin
+// (this avoids CORS issues if your function is deployed on the same Netlify site).
+// If your function is hosted on another Netlify site, replace with the full URL:
+// e.g. 'https://spiffy-beijinho-aed172.netlify.app/.netlify/functions/call'
+const CALL_FUNCTION_URL = '/.netlify/functions/call';
 
 // ==========================
 //  EmailJS Initialization
 // ==========================
 (function () {
-  if (window.emailjs) emailjs.init('RR9SIRs9g99ygpLBQ'); 
+  if (window.emailjs) emailjs.init('RR9SIRs9g99ygpLBQ');
 })();
 
 // ==========================
@@ -17,7 +20,7 @@ const CALL_FUNCTION_URL = 'https://saheli-the-distress-sos.netlify.app/.netlify/
 const $ = id => document.getElementById(id);
 const log = (text) => {
   const area = $('logArea');
-  const t = document.createElement('div'); 
+  const t = document.createElement('div');
   t.textContent = `${new Date().toLocaleString()} — ${text}`;
   area.prepend(t);
 };
@@ -27,25 +30,21 @@ const log = (text) => {
 // ==========================
 let map, marker;
 let currentCoords = null;
-let sosTimer = null;
+let sosTimer = null;        // cancelable timer
 let sosInProgress = false;
 
 // ==========================
 //  MAP SETUP
 // ==========================
 function initMap() {
-  try {
-    map = L.map('map').setView([20.5937, 78.9629], 5);
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      maxZoom: 19
-    }).addTo(map);
-  } catch (e) {
-    console.warn('Leaflet not loaded or map container missing', e);
-  }
+  map = L.map('map').setView([20.5937, 78.9629], 5);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    maxZoom: 19
+  }).addTo(map);
 }
 
 // ==========================
-//  LOCATION (promise)
+//  GET LOCATION (PROMISE)
 // ==========================
 function shareLocation(showOnMap = true) {
   return new Promise((resolve) => {
@@ -60,11 +59,10 @@ function shareLocation(showOnMap = true) {
         const { latitude, longitude } = pos.coords;
         currentCoords = { lat: latitude, lon: longitude };
 
-        const coordsEl = $('coords');
-        if (coordsEl) coordsEl.textContent = `Location: ${latitude.toFixed(5)}, ${longitude.toFixed(5)}`;
+        $('coords').textContent = `Location: ${latitude.toFixed(5)}, ${longitude.toFixed(5)}`;
         log('Location shared');
 
-        if (showOnMap && map) {
+        if (showOnMap) {
           if (marker) map.removeLayer(marker);
           marker = L.marker([latitude, longitude]).addTo(map).bindPopup('You are here').openPopup();
           map.setView([latitude, longitude], 16);
@@ -87,63 +85,43 @@ function shareLocation(showOnMap = true) {
 // ==========================
 function playAlarm() {
   const audio = $('alarmAudio');
-  if (!audio) return;
   audio.currentTime = 0;
-  audio.play().catch(() => {/* autoplay blocked */});
+  audio.play().catch(() => {});
   log('Alarm sounded');
 }
 function stopAlarm() {
   const audio = $('alarmAudio');
-  if (!audio) return;
   audio.pause();
   audio.currentTime = 0;
 }
 
 // ==========================
-//  CONTACTS (localStorage)
+//  CONTACTS MANAGEMENT
 // ==========================
 const CONTACTS_KEY = 'safe_contacts';
 
 function loadContacts() {
-  try {
-    const raw = localStorage.getItem(CONTACTS_KEY);
-    return raw ? JSON.parse(raw) : [];
-  } catch (e) {
-    console.error('Failed to load contacts', e);
-    return [];
-  }
+  const raw = localStorage.getItem(CONTACTS_KEY);
+  return raw ? JSON.parse(raw) : [];
 }
 
 function saveContacts(list) {
-  try {
-    localStorage.setItem(CONTACTS_KEY, JSON.stringify(list));
-    renderContacts();
-  } catch (e) {
-    console.error('Failed to save contacts', e);
-  }
-}
-
-function escapeHtml(str = '') {
-  return String(str)
-    .replace(/&/g, '&amp;')
-    .replace(/"/g, '&quot;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;');
+  localStorage.setItem(CONTACTS_KEY, JSON.stringify(list));
+  renderContacts();
 }
 
 function renderContacts() {
   const ul = $('contactsList');
-  if (!ul) return;
   ul.innerHTML = '';
   const list = loadContacts();
 
   list.forEach((c, i) => {
     const li = document.createElement('li');
     li.innerHTML = `
-      <div class="contact-meta">
-        <div class="name">${escapeHtml(c.name)}</div>
-        <div class="sub">Phone: ${c.phone ? escapeHtml(c.phone) : '—'}</div>
-        <div class="sub">Email: ${c.email ? escapeHtml(c.email) : '—'}</div>
+      <div>
+        <strong>${escapeHtml(c.name)}</strong>
+        <div class="muted">Email: ${c.email ? escapeHtml(c.email) : '—'}</div>
+        <div class="muted">Phone: ${c.phone ? escapeHtml(c.phone) : '—'}</div>
       </div>
       <div>
         <button data-i="${i}" class="ghost removeBtn">Remove</button>
@@ -156,17 +134,24 @@ function renderContacts() {
     btn.onclick = e => {
       const i = Number(e.target.dataset.i);
       const l = loadContacts();
-      if (i >= 0 && i < l.length) {
-        const removed = l.splice(i, 1);
-        saveContacts(l);
-        log('Contact removed: ' + (removed[0] && removed[0].name ? removed[0].name : 'unknown'));
-      }
+      l.splice(i, 1);
+      saveContacts(l);
+      log('Contact removed');
     };
   });
 }
 
+// small helper to avoid accidental HTML injection in rendered values
+function escapeHtml(str = '') {
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/"/g, '&quot;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;');
+}
+
 // ==========================
-//  CALL TRIGGER (Netlify -> Twilio)
+//  TRIGGER CALLS (Netlify -> Twilio)
 // ==========================
 async function triggerCalls(phoneRecipients, currentCoordsParam) {
   if (!phoneRecipients || phoneRecipients.length === 0) {
@@ -185,34 +170,46 @@ async function triggerCalls(phoneRecipients, currentCoordsParam) {
       })
     });
 
-    const json = await resp.json().catch(()=>({ error: 'invalid json response' }));
+    // handle non-JSON or bad responses gracefully
+    let json;
+    try { json = await resp.json(); } catch (e) { json = null; }
+
     if (resp.ok) {
       log(`Call requests sent to ${phoneRecipients.length} number(s)`);
-      return json;
+      return json || { ok: true };
     } else {
-      log('Call function returned error: ' + (json.error || resp.status));
-      return json;
+      // Friendly error messages for common failure modes
+      const bodyError = (json && json.error) ? json.error : `HTTP ${resp.status}`;
+      log('Call function returned error: ' + bodyError);
+
+      // Common helpful guidance
+      if (resp.status === 403 || /Origin not allowed/i.test(bodyError)) {
+        const origin = location.origin;
+        log(`CORS/Origin issue. Ensure the Netlify env var ALLOWED_ORIGIN on the function host includes: ${origin}`);
+      }
+
+      return json || { ok: false, error: bodyError };
     }
   } catch (err) {
     console.error('Call error', err);
     log('Call request failed: see console');
-    return { ok: false, error: err.message || err };
+    return { ok: false, error: err.message || String(err) };
   }
 }
 
 // ==========================
-//  ALERT FLOW (Email + Calls)
+//  SOS FLOW
 // ==========================
 async function performAlertSequence() {
-  // ensure we tried to get location
+  // 1) Wait for location (already done prior to calling this in most flows, but ensure)
   await shareLocation(true);
 
-  // sound alarm
+  // 2) Play alarm (visual + audio)
   playAlarm();
 
-  // email part
+  // 3) Email
   const contacts = loadContacts();
-  const emails = contacts.map(c => c.email).filter(Boolean);
+  let emails = contacts.map(c => c.email).filter(Boolean);
   if (emails.length) {
     const emailsStr = emails.join(',');
     const template_params = {
@@ -226,16 +223,16 @@ async function performAlertSequence() {
 
     try {
       await emailjs.send('service_hf9wccx', 'template_7wjlod7', template_params);
-      log('Alert emailed to: ' + emailsStr);
+      log('Alert emailed to contacts: ' + emailsStr);
     } catch (err) {
       console.error('EmailJS error', err);
       log('Email send failed');
     }
   } else {
-    log('No email contacts to notify');
+    log('No emails saved to notify');
   }
 
-  // calls part
+  // 4) Calls (Twilio via Netlify function) - phone numbers in E.164
   const phoneRecipients = contacts.map(c => c.phone).filter(Boolean);
   if (phoneRecipients.length) {
     const callResult = await triggerCalls(phoneRecipients, currentCoords);
@@ -248,29 +245,29 @@ async function performAlertSequence() {
     log('No phone numbers saved to call');
   }
 
+  // 5) Final log entry
   log('SOS sequence completed');
 }
 
 // ==========================
-//  CANCELABLE SOS (5s)
+//  CANCELABLE SOS (5s window)
 // ==========================
 function startCancelableSOS() {
   if (sosInProgress) return;
   sosInProgress = true;
-  const sosBtn = $('sosBtn');
-  const cancelBtn = $('cancelBtn');
-  if (sosBtn) sosBtn.disabled = true;
-  if (cancelBtn) cancelBtn.style.display = 'inline-block';
+  $('sosBtn').disabled = true;
+  $('cancelBtn').style.display = 'inline-block';
   log('SOS initiated — you have 5 seconds to cancel');
 
+  // clear any existing timer
   if (sosTimer) clearTimeout(sosTimer);
 
   sosTimer = setTimeout(async () => {
-    if (cancelBtn) cancelBtn.style.display = 'none';
-    if (sosBtn) sosBtn.disabled = false;
+    $('cancelBtn').style.display = 'none';
+    $('sosBtn').disabled = false;
     sosInProgress = false;
     await performAlertSequence();
-  }, 5000);
+  }, 5000); // 5 seconds
 }
 
 function cancelSOS() {
@@ -278,15 +275,13 @@ function cancelSOS() {
   clearTimeout(sosTimer);
   sosTimer = null;
   sosInProgress = false;
-  const sosBtn = $('sosBtn');
-  const cancelBtn = $('cancelBtn');
-  if (sosBtn) sosBtn.disabled = false;
-  if (cancelBtn) cancelBtn.style.display = 'none';
+  $('sosBtn').disabled = false;
+  $('cancelBtn').style.display = 'none';
   log('SOS canceled by user');
 }
 
 // ==========================
-//  TEST CALL HELPER
+//  Test call helper
 // ==========================
 async function triggerTestCall(number) {
   if (!number) return;
@@ -300,7 +295,7 @@ async function triggerTestCall(number) {
         from_name: 'SafeWave Demo'
       })
     });
-    const json = await resp.json().catch(()=>({ error: 'invalid json' }));
+    const json = await resp.json().catch(()=>({}));
     console.log('CALL RESPONSE', json);
     alert('Test call response: ' + (json.ok ? 'Sent' : (json.error || 'Failed')));
     log('Test call result: ' + (json.ok ? 'OK' : (json.error || 'Failed')));
@@ -312,45 +307,42 @@ async function triggerTestCall(number) {
 }
 
 // ==========================
-//  DOM Ready — wire events
+//  MAIN LOGIC (DOM READY)
 // ==========================
 document.addEventListener('DOMContentLoaded', () => {
+  // initialize map and contacts UI
   initMap();
   renderContacts();
 
-  // Add contact
-  const contactForm = $('contactForm');
-  if (contactForm) {
-    contactForm.onsubmit = e => {
-      e.preventDefault();
-      const name = $('name').value.trim();
-      const email = $('email').value.trim();
-      const phone = $('phone').value.trim();
+  // Contact form submit -> save name, email, phone
+  $('contactForm').onsubmit = e => {
+    e.preventDefault();
+    const name = $('name').value.trim();
+    const email = $('email').value.trim();
+    const phone = $('phone').value.trim();
 
-      if (!name) { alert('Please enter a name'); return; }
-      if (!phone) { alert('Please enter a phone number'); return; }
+    // basic validation
+    if (!name) { alert('Please enter name'); return; }
+    if (!phone) { alert('Please enter phone in +countryformat'); return; }
+    // simple E.164-ish check (not exhaustive)
+    if (!/^\+?\d{7,15}$/.test(phone.replace(/\s+/g, ''))) {
+      alert('Please enter a valid phone number with country code (e.g. +919876543210)');
+      return;
+    }
 
-      // simple validation for phone
-      if (!/^\+?\d{7,15}$/.test(phone.replace(/\s+/g, ''))) {
-        alert('Please enter a valid phone number with country code (e.g. +919876543210)');
-        return;
-      }
+    const list = loadContacts();
+    list.push({ name, email, phone });
+    saveContacts(list);
 
-      const list = loadContacts();
-      list.push({ name, email, phone });
-      saveContacts(list);
+    $('name').value = '';
+    $('email').value = '';
+    $('phone').value = '';
 
-      $('name').value = '';
-      $('email').value = '';
-      $('phone').value = '';
-
-      log('Contact added: ' + name);
-    };
-  }
+    log('Contact added: ' + name);
+  };
 
   // Clear contacts
-  const clearBtn = $('clearContacts');
-  if (clearBtn) clearBtn.onclick = () => {
+  $('clearContacts').onclick = () => {
     if (confirm('Clear all contacts?')) {
       localStorage.removeItem(CONTACTS_KEY);
       renderContacts();
@@ -358,20 +350,15 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   };
 
-  // Buttons
-  const shareBtn = $('shareLocBtn');
-  if (shareBtn) shareBtn.onclick = () => shareLocation(true);
+  // Buttons: share location & alarm
+  $('shareLocBtn').onclick = () => shareLocation(true);
+  $('alarmBtn').onclick = () => playAlarm();
 
-  const alarmBtn = $('alarmBtn');
-  if (alarmBtn) alarmBtn.onclick = () => playAlarm();
+  // SOS flow: start cancelable SOS (5s window)
+  $('sosBtn').onclick = () => startCancelableSOS();
+  $('cancelBtn').onclick = () => cancelSOS();
 
-  const sosBtn = $('sosBtn');
-  if (sosBtn) sosBtn.onclick = () => startCancelableSOS();
-
-  const cancelBtn = $('cancelBtn');
-  if (cancelBtn) cancelBtn.onclick = () => cancelSOS();
-
-  // Test call button
+  // Test call button (in header)
   const testBtn = $('testCallBtn');
   if (testBtn) {
     testBtn.onclick = async () => {
@@ -381,17 +368,14 @@ document.addEventListener('DOMContentLoaded', () => {
     };
   }
 
-  // Admin logs
-  const adminBtn = $('adminBtn');
-  if (adminBtn) {
-    adminBtn.onclick = () => {
-      alert(
-        'Event log:\n\n' +
+  // Admin view for logs
+  $('adminBtn').onclick = () => {
+    alert(
+      'Event log:\n\n' +
         Array.from(document.querySelectorAll('#logArea div'))
           .map(d => d.textContent)
-          .slice(0, 50)
+          .slice(0, 30)
           .join('\n')
-      );
-    };
-  }
+    );
+  };
 });
