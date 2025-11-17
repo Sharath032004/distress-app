@@ -1,11 +1,7 @@
 {
-  "name": "safe-wave",
+  "name": "distress-app",
   "version": "1.0.0",
-  "private": true,
-  "engines": {
-    "node": "18"
-  },
   "dependencies": {
-    "twilio": "^4.0.0"
+    "twilio": "^4.23.0"
   }
 }
