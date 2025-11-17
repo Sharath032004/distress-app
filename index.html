@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>SafeWave — Distress SOS</title>
+  <title>Saheli — Distress SOS</title>
 
   <!-- Fonts -->
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&family=Playfair+Display:wght@500;700&display=swap" rel="stylesheet">
@@ -16,117 +16,75 @@
 
   <style>
     :root{
-      --bg-1: #0f172a; /* deep navy */
-      --glass: rgba(255,255,255,0.06);
+      --bg-1: #071428;
       --muted: #94a3b8;
-      --accent1: #ff6b6b; /* warm */
-      --accent2: #7c5cff; /* violet */
-      --accent3: #00d4ff; /* cyan */
-      --card-bg: rgba(255,255,255,0.03);
+      --accent1: #ff6b6b;
+      --accent2: #7c5cff;
+      --accent3: #00d4ff;
       --glass-border: rgba(255,255,255,0.06);
-      --glass-strong: rgba(255,255,255,0.08);
     }
 
-    /* Page */
     html,body{height:100%}
     body{
-      margin:0;
-      height:100%;
+      margin:0;height:100%;
       font-family:"Poppins",system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial;
-      background: radial-gradient(1200px 500px at 10% 10%, rgba(124,92,255,0.12), transparent),
-                  radial-gradient(900px 350px at 90% 90%, rgba(0,212,255,0.06), transparent),
-                  linear-gradient(180deg, #071025 0%, #071428 40%, #071428 100%);
-      color: #e6eef7;
+      background:
+        radial-gradient(1200px 500px at 8% 12%, rgba(124,92,255,0.12), transparent),
+        radial-gradient(900px 350px at 90% 88%, rgba(0,212,255,0.06), transparent),
+        linear-gradient(180deg,#071025 0%, #071428 40%, #071428 100%);
+      color:#e6eef7;
       -webkit-font-smoothing:antialiased;
-      -moz-osx-font-smoothing:grayscale;
     }
 
-    /* Container */
-    .wrap{max-width:1200px;margin:28px auto;padding:24px;display:grid;grid-template-columns: 420px 1fr;gap:22px;align-items:start}
+    .wrap{max-width:1200px;margin:28px auto;padding:20px;display:grid;grid-template-columns:420px 1fr;gap:20px;align-items:start}
 
     /* Header */
     header.sitebar{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:12px}
-    .brand{
-      display:flex;gap:12px;align-items:center;
-    }
-    .logo{
-      width:56px;height:56px;border-radius:14px;
-      background: linear-gradient(135deg,var(--accent1),var(--accent2));
-      display:flex;align-items:center;justify-content:center;
-      box-shadow: 0 8px 30px rgba(124,92,255,0.18), inset 0 -6px 18px rgba(0,0,0,0.15);
-      font-weight:700;font-family:"Playfair Display",serif;font-size:18px;color:white;
-    }
-    .brand h1{margin:0;font-size:18px;font-weight:700}
+    .brand{display:flex;gap:12px;align-items:center}
+    .logo{width:56px;height:56px;border-radius:12px;background:linear-gradient(135deg,var(--accent1),var(--accent2));display:flex;align-items:center;justify-content:center;font-family:"Playfair Display";font-weight:700;color:white}
+    .brand h1{margin:0;font-size:18px}
     .brand p{margin:0;font-size:12px;color:var(--muted)}
+    .top-actions{display:flex;gap:10px}
 
-    .top-actions{display:flex;gap:10px;align-items:center}
     .icon-btn{background:transparent;border:1px solid rgba(255,255,255,0.04);padding:10px;border-radius:10px;color:var(--muted);cursor:pointer}
-    .icon-btn:hover{transform:translateY(-3px);box-shadow:0 8px 30px rgba(0,0,0,0.35)}
+    .icon-btn:hover{transform:translateY(-3px)}
 
-    /* Left column cards */
-    .panel{background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));border:1px solid var(--glass-border);backdrop-filter: blur(8px);border-radius:14px;padding:18px;box-shadow: 0 10px 30px rgba(2,6,23,0.6)}
+    /* Cards */
+    .panel{background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));border:1px solid var(--glass-border);backdrop-filter: blur(8px);border-radius:12px;padding:16px;box-shadow:0 18px 40px rgba(2,6,23,0.6)}
     .muted{color:var(--muted);font-size:13px}
 
-    /* SOS card */
-    .sos-card h2{margin:0 0 6px 0;font-size:18px}
-    .sos-wrap{display:flex;flex-direction:column;gap:12px}
-    .sos-btn{
-      display:inline-flex;align-items:center;gap:12px;
-      background: linear-gradient(90deg,var(--accent1),#ff9f80);
-      border:none;padding:16px 20px;border-radius:12px;color:white;font-weight:700;font-size:20px;
-      box-shadow: 0 18px 40px rgba(255,106,106,0.12), 0 6px 20px rgba(0,0,0,0.4);
-      cursor:pointer;transition:transform .15s ease, box-shadow .15s ease;
-    }
-    .sos-btn .dot{width:12px;height:12px;border-radius:50%;background:#fff;box-shadow:0 6px 18px rgba(255,255,255,0.14)}
-    .sos-btn:active{transform:scale(.98)}
-    .sos-controls{display:flex;gap:8px;align-items:center}
+    /* SOS */
+    .sos-btn{display:inline-flex;align-items:center;gap:12px;background:linear-gradient(90deg,var(--accent1),#ff9f80);border:none;padding:14px 18px;border-radius:12px;color:white;font-weight:700;font-size:18px;cursor:pointer;box-shadow:0 14px 30px rgba(255,106,106,0.12)}
+    .sos-btn .dot{width:12px;height:12px;border-radius:50%;background:white;box-shadow:0 6px 18px rgba(255,255,255,0.14)}
+    .sos-controls{display:flex;gap:8px;margin-top:12px}
 
-    /* Contacts card */
+    /* Form */
     .contacts-grid{display:flex;flex-direction:column;gap:12px}
     .contact-form-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
     label{font-size:12px;color:var(--muted);display:block;margin-top:6px}
-    .input{
-      background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
-      border:1px solid rgba(255,255,255,0.04);padding:10px;border-radius:10px;color:#eef7ff;
-    }
+    .input{background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));border:1px solid rgba(255,255,255,0.04);padding:10px;border-radius:10px;color:#eef7ff}
     .btn-primary{background:linear-gradient(90deg,var(--accent2),var(--accent3));border:none;padding:10px 14px;border-radius:10px;color:white;cursor:pointer}
-    .btn-ghost{background:transparent;border:1px solid rgba(255,255,255,0.04);color:var(--muted);padding:10px;border-radius:10px;cursor:pointer}
+    .btn-ghost{background:transparent;border:1px solid rgba(255,255,255,0.04);padding:10px;border-radius:10px;color:var(--muted);cursor:pointer}
 
-    ul#contactsList{list-style:none;padding:0;margin:8px 0;display:flex;flex-direction:column;gap:8px;}
+    ul#contactsList{list-style:none;padding:0;margin:8px 0;display:flex;flex-direction:column;gap:8px}
     ul#contactsList li{display:flex;align-items:center;justify-content:space-between;padding:12px;border-radius:10px;border:1px solid rgba(255,255,255,0.03);background:linear-gradient(180deg, rgba(255,255,255,0.01), transparent)}
     .contact-meta{display:flex;flex-direction:column}
     .contact-meta .name{font-weight:600;color:#fff}
     .contact-meta .sub{color:var(--muted);font-size:13px;margin-top:4px}
 
-    /* Right column */
+    /* Right */
     .right-col{display:grid;grid-template-rows:1fr auto;gap:16px}
-    #map{height:420px;border-radius:12px;border:1px solid rgba(255,255,255,0.04);overflow:hidden}
+    #map{height:420px;border-radius:10px;border:1px solid rgba(255,255,255,0.04);overflow:hidden}
     .logArea{max-height:220px;overflow:auto;padding:12px;background:linear-gradient(180deg,rgba(255,255,255,0.01),transparent);border-radius:10px;border:1px solid rgba(255,255,255,0.03);font-size:13px;color:var(--muted)}
 
-    /* footer */
     footer{margin-top:12px;text-align:center;color:var(--muted);font-size:13px}
 
-    /* small responsive */
-    @media (max-width:980px){
-      .wrap{grid-template-columns:1fr; padding:18px}
-      #map{height:300px}
-    }
+    @media (max-width:980px){ .wrap{grid-template-columns:1fr;padding:16px} #map{height:300px} }
 
-    /* subtle animations */
-    .pulse {
-      display:inline-block;width:8px;height:8px;border-radius:50%;
-      background:rgba(255,255,255,0.95); box-shadow:0 0 0 6px rgba(255,107,107,0.12);
-      animation: pulse 1.6s infinite;
-    }
-    @keyframes pulse {
-      0% { transform:scale(.95); opacity:1 }
-      70% { transform:scale(1.6); opacity:0 }
-      100% { transform:scale(.95); opacity:0 }
-    }
-
-    /* focus outlines */
+    /* Small animations */
+    .pulse{display:inline-block;width:8px;height:8px;border-radius:50%;background:rgba(255,255,255,0.95);box-shadow:0 0 0 6px rgba(255,107,107,0.12);animation:pulse 1.6s infinite}
+    @keyframes pulse{0%{transform:scale(.95);opacity:1}70%{transform:scale(1.6);opacity:0}100%{transform:scale(.95);opacity:0}}
     .input:focus{outline:none;box-shadow:0 8px 30px rgba(124,92,255,0.06);border-color:rgba(124,92,255,0.6)}
-    .btn-primary:focus{outline:none;box-shadow:0 10px 30px rgba(124,92,255,0.12)}
   </style>
 </head>
 <body>
@@ -136,7 +94,7 @@
         <div class="logo">SW</div>
         <div>
           <h1>Saheli</h1>
-          <p>The Distress SOS.</p>
+          <p>The Distress SOS</p>
         </div>
       </div>
 
@@ -146,7 +104,7 @@
       </div>
     </header>
 
-    <!-- LEFT COLUMN -->
+    <!-- LEFT -->
     <section>
       <div class="panel sos-card">
         <div style="display:flex;align-items:center;justify-content:space-between">
@@ -168,13 +126,13 @@
             <span class="dot" aria-hidden="true"></span>
           </button>
 
-          <div class="sos-controls" style="margin-top:8px;">
+          <div class="sos-controls">
             <button id="alarmBtn" class="btn-ghost"><i class="fa-solid fa-bell"></i> Alarm</button>
             <button id="shareLocBtn" class="btn-ghost"><i class="fa-solid fa-location-dot"></i> Share Location</button>
             <button id="cancelBtn" class="btn-ghost" style="display:none">Cancel</button>
           </div>
 
-          <div class="muted" style="margin-top:8px">Allow location on prompt so the alert includes coordinates.</div>
+          <div class="muted" style="margin-top:8px">Allow location so alerts include coordinates.</div>
         </div>
       </div>
 
@@ -210,7 +168,7 @@
       </div>
     </section>
 
-    <!-- RIGHT COLUMN -->
+    <!-- RIGHT -->
     <section class="right-col">
       <div class="panel" style="padding:12px 12px 16px 12px">
         <h3 style="margin:0 0 8px 0">Live Location</h3>
@@ -220,7 +178,7 @@
 
       <div class="panel" style="padding:12px">
         <h3 style="margin:0 0 8px 0">Event Log</h3>
-        <div id="logArea" class="logArea"></div>
+        <div id="logArea" class="logArea" role="log" aria-live="polite"></div>
         <div style="display:flex;justify-content:space-between;margin-top:10px">
           <small class="muted">Activity and debug</small>
           <small class="muted">Local only</small>
@@ -240,7 +198,7 @@
   <!-- EmailJS SDK -->
   <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
 
-  <!-- App script (unchanged ids so your existing app.js works) -->
+  <!-- App script -->
   <script src="app.js"></script>
 </body>
 </html>
