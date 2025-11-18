@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Saheli — Distress SOS</title>
+  <title>Saheli — The Distress SOS</title>
 
   <!-- Fonts -->
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&family=Playfair+Display:wght@500;700&display=swap" rel="stylesheet">
@@ -14,77 +14,54 @@
   <!-- Font Awesome -->
   <script src="https://kit.fontawesome.com/a2d9b8f6d1.js" crossorigin="anonymous"></script>
 
+  <!-- Your CSS file -->
+  <link rel="stylesheet" href="style.css">
+
   <style>
-    :root{
-      --bg-1: #071428;
-      --muted: #94a3b8;
-      --accent1: #ff6b6b;
-      --accent2: #7c5cff;
-      --accent3: #00d4ff;
-      --glass-border: rgba(255,255,255,0.06);
+    /* Extra small tweaks so the camera box fits neatly */
+    #detectorContainer {
+      width: 100%;
+      height: 320px;                /* same proportion as your design */
+      border-radius: 12px;
+      overflow: hidden;
+      background: linear-gradient(180deg, rgba(0,0,0,0.85), rgba(0,0,0,0.9));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+    }
+    #detectorContainer video {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;           /* keeps video filling the box */
+      display: block;
+    }
+    #detectorContainer .placeholder {
+      color: #8b98ad;
+      font-size: 16px;
+      text-align: center;
+      padding: 8px 16px;
     }
 
-    html,body{height:100%}
-    body{
-      margin:0;height:100%;
-      font-family:"Poppins",system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial;
-      background:
-        radial-gradient(1200px 500px at 8% 12%, rgba(124,92,255,0.12), transparent),
-        radial-gradient(900px 350px at 90% 88%, rgba(0,212,255,0.06), transparent),
-        linear-gradient(180deg,#071025 0%, #071428 40%, #071428 100%);
-      color:#e6eef7;
-      -webkit-font-smoothing:antialiased;
+    /* emotion overlay */
+    #emotionOverlay {
+      position: fixed;
+      right: 18px;
+      top: 84px;
+      background: rgba(0,0,0,0.6);
+      color: #fff;
+      padding: 8px 12px;
+      border-radius: 8px;
+      backdrop-filter: blur(6px);
+      display: none;
+      z-index: 9999;
+      font-weight: 600;
     }
 
-    .wrap{max-width:1200px;margin:28px auto;padding:20px;display:grid;grid-template-columns:420px 1fr;gap:20px;align-items:start}
-
-    /* Header */
-    header.sitebar{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:12px}
-    .brand{display:flex;gap:12px;align-items:center}
-    .logo{width:56px;height:56px;border-radius:12px;background:linear-gradient(135deg,var(--accent1),var(--accent2));display:flex;align-items:center;justify-content:center;font-family:"Playfair Display";font-weight:700;color:white}
-    .brand h1{margin:0;font-size:18px}
-    .brand p{margin:0;font-size:12px;color:var(--muted)}
-    .top-actions{display:flex;gap:10px}
-
-    .icon-btn{background:transparent;border:1px solid rgba(255,255,255,0.04);padding:10px;border-radius:10px;color:var(--muted);cursor:pointer}
-    .icon-btn:hover{transform:translateY(-3px)}
-
-    /* Cards */
-    .panel{background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));border:1px solid var(--glass-border);backdrop-filter: blur(8px);border-radius:12px;padding:16px;box-shadow:0 18px 40px rgba(2,6,23,0.6)}
-    .muted{color:var(--muted);font-size:13px}
-
-    /* SOS */
-    .sos-btn{display:inline-flex;align-items:center;gap:12px;background:linear-gradient(90deg,var(--accent1),#ff9f80);border:none;padding:14px 18px;border-radius:12px;color:white;font-weight:700;font-size:18px;cursor:pointer;box-shadow:0 14px 30px rgba(255,106,106,0.12)}
-    .sos-btn .dot{width:12px;height:12px;border-radius:50%;background:white;box-shadow:0 6px 18px rgba(255,255,255,0.14)}
-    .sos-controls{display:flex;gap:8px;margin-top:12px}
-
-    /* Form */
-    .contacts-grid{display:flex;flex-direction:column;gap:12px}
-    .contact-form-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-    label{font-size:12px;color:var(--muted);display:block;margin-top:6px}
-    .input{background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));border:1px solid rgba(255,255,255,0.04);padding:10px;border-radius:10px;color:#eef7ff}
-    .btn-primary{background:linear-gradient(90deg,var(--accent2),var(--accent3));border:none;padding:10px 14px;border-radius:10px;color:white;cursor:pointer}
-    .btn-ghost{background:transparent;border:1px solid rgba(255,255,255,0.04);padding:10px;border-radius:10px;color:var(--muted);cursor:pointer}
-
-    ul#contactsList{list-style:none;padding:0;margin:8px 0;display:flex;flex-direction:column;gap:8px}
-    ul#contactsList li{display:flex;align-items:center;justify-content:space-between;padding:12px;border-radius:10px;border:1px solid rgba(255,255,255,0.03);background:linear-gradient(180deg, rgba(255,255,255,0.01), transparent)}
-    .contact-meta{display:flex;flex-direction:column}
-    .contact-meta .name{font-weight:600;color:#fff}
-    .contact-meta .sub{color:var(--muted);font-size:13px;margin-top:4px}
-
-    /* Right */
-    .right-col{display:grid;grid-template-rows:1fr auto;gap:16px}
-    #map{height:420px;border-radius:10px;border:1px solid rgba(255,255,255,0.04);overflow:hidden}
-    .logArea{max-height:220px;overflow:auto;padding:12px;background:linear-gradient(180deg,rgba(255,255,255,0.01),transparent);border-radius:10px;border:1px solid rgba(255,255,255,0.03);font-size:13px;color:var(--muted)}
-
-    footer{margin-top:12px;text-align:center;color:var(--muted);font-size:13px}
-
-    @media (max-width:980px){ .wrap{grid-template-columns:1fr;padding:16px} #map{height:300px} }
-
-    /* Small animations */
-    .pulse{display:inline-block;width:8px;height:8px;border-radius:50%;background:rgba(255,255,255,0.95);box-shadow:0 0 0 6px rgba(255,107,107,0.12);animation:pulse 1.6s infinite}
-    @keyframes pulse{0%{transform:scale(.95);opacity:1}70%{transform:scale(1.6);opacity:0}100%{transform:scale(.95);opacity:0}}
-    .input:focus{outline:none;box-shadow:0 8px 30px rgba(124,92,255,0.06);border-color:rgba(124,92,255,0.6)}
+    /* small responsive */
+    @media (max-width: 980px){
+      #detectorContainer { height: 240px; }
+    }
   </style>
 </head>
 <body>
@@ -94,51 +71,43 @@
         <div class="logo">SW</div>
         <div>
           <h1>Saheli</h1>
-          <p>The Distress SOS</p>
+          <p>The Distress SOS.</p>
         </div>
       </div>
 
       <div class="top-actions">
-        <button id="testCallBtn" class="icon-btn" title="Trigger test call"><i class="fa-solid fa-phone"></i></button>
-        <button id="adminBtn" class="icon-btn" title="Open admin logs"><i class="fa-solid fa-list"></i></button>
+        <button id="testCallBtn" class="icon-btn" title="Trigger test call"><i class="fa-solid fa-phone"></i> Test Call</button>
+        <button id="adminBtn" class="icon-btn" title="Open admin logs"><i class="fa-solid fa-list"></i> Admin</button>
       </div>
     </header>
 
-    <!-- LEFT -->
+    <!-- LEFT COLUMN -->
     <section>
       <div class="panel sos-card">
         <div style="display:flex;align-items:center;justify-content:space-between">
           <div>
-            <h2 style="margin:0 0 6px 0">Emergency</h2>
-            <div class="muted">One tap to alert your contacts</div>
+            <h2 style="margin:0 0 6px 0">Face Detector (demo)</h2>
+            <div class="muted">Allow camera access when prompted. Face-detection will auto-trigger SOS when sustained fear/stress is detected.</div>
           </div>
           <div style="text-align:right;color:var(--muted);font-size:13px">v1.0 • Demo</div>
         </div>
 
         <div style="margin-top:16px" class="sos-wrap">
-          <button id="sosBtn" class="sos-btn" aria-label="Send SOS">
-            <span style="display:inline-flex;align-items:center;gap:10px">
-              <span style="width:12px;height:12px;border-radius:4px;background:rgba(255,255,255,0.12);display:inline-flex;align-items:center;justify-content:center">
-                <i class="fa-solid fa-triangle-exclamation" style="color:var(--accent1);font-size:12px"></i>
-              </span>
-              SOS
-            </span>
-            <span class="dot" aria-hidden="true"></span>
-          </button>
+          <!-- detector container - face-rec.js will create video inside this -->
+          <div id="detectorContainer" aria-live="polite" aria-label="Camera preview">
+            <div class="placeholder">Camera preview will appear here once allowed</div>
+          </div>
 
-          <div class="sos-controls">
+          <div class="sos-controls" style="margin-top:12px;">
             <button id="alarmBtn" class="btn-ghost"><i class="fa-solid fa-bell"></i> Alarm</button>
             <button id="shareLocBtn" class="btn-ghost"><i class="fa-solid fa-location-dot"></i> Share Location</button>
             <button id="cancelBtn" class="btn-ghost" style="display:none">Cancel</button>
           </div>
-
-          <div class="muted" style="margin-top:8px">Allow location so alerts include coordinates.</div>
         </div>
       </div>
 
       <div class="panel contacts-card" style="margin-top:14px;">
         <h3 style="margin:0 0 6px 0">Emergency Contacts</h3>
-        <div class="muted" style="margin-bottom:8px">Add people who should get an alert and a call.</div>
 
         <form id="contactForm" class="contacts-grid" autocomplete="off">
           <div class="contact-form-row">
@@ -168,7 +137,7 @@
       </div>
     </section>
 
-    <!-- RIGHT -->
+    <!-- RIGHT COLUMN -->
     <section class="right-col">
       <div class="panel" style="padding:12px 12px 16px 12px">
         <h3 style="margin:0 0 8px 0">Live Location</h3>
@@ -178,7 +147,7 @@
 
       <div class="panel" style="padding:12px">
         <h3 style="margin:0 0 8px 0">Event Log</h3>
-        <div id="logArea" class="logArea" role="log" aria-live="polite"></div>
+        <div id="logArea" class="logArea"></div>
         <div style="display:flex;justify-content:space-between;margin-top:10px">
           <small class="muted">Activity and debug</small>
           <small class="muted">Local only</small>
@@ -189,6 +158,9 @@
 
   <footer style="text-align:center;padding:14px;color:var(--muted);font-size:13px">Built for mini project — Saheli</footer>
 
+  <!-- Emotion overlay (updated by face-rec.js) -->
+  <div id="emotionOverlay" aria-hidden="true"></div>
+
   <!-- Alarm audio -->
   <audio id="alarmAudio" src="alarm.mp3" preload="auto"></audio>
 
@@ -198,7 +170,13 @@
   <!-- EmailJS SDK -->
   <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
 
-  <!-- App script -->
-  <script src="app.js"></script>
+  <!-- IMPORTANT: single face-api.js include (no duplicates) -->
+  <script src="https://unpkg.com/face-api.js@0.22.2/dist/face-api.min.js"></script>
+
+  <!-- face-rec must come after face-api; use defer so DOM is ready -->
+  <script defer src="face-rec.js"></script>
+
+  <!-- app.js last (uses DOM ids existing above) -->
+  <script defer src="app.js"></script>
 </body>
 </html>

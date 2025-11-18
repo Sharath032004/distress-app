@@ -1,50 +1,79 @@
+// app.js (updated - drop into your site; keep same IDs in index.html)
 // ==========================
 //  Configuration
 // ==========================
-// Default uses a relative path so the function call originates from the same origin
-// (this avoids CORS issues if your function is deployed on the same Netlify site).
-// If your function is hosted on another Netlify site, replace with the full URL:
-// e.g. 'https://spiffy-beijinho-aed172.netlify.app/.netlify/functions/call'
-const CALL_FUNCTION_URL = '/.netlify/functions/call';
+const CALL_FUNCTION_URL = '/.netlify/functions/call'; // change if your call function is on another host
 
 // ==========================
 //  EmailJS Initialization
 // ==========================
 (function () {
-  if (window.emailjs) emailjs.init('RR9SIRs9g99ygpLBQ');
+  if (window.emailjs) {
+    try { emailjs.init('RR9SIRs9g99ygpLBQ'); } catch (e) { console.warn('EmailJS init failed', e); }
+  }
 })();
 
 // ==========================
-//  Helper Functions
+//  Helpers
 // ==========================
 const $ = id => document.getElementById(id);
+function qsel(sel) { try { return document.querySelector(sel); } catch(e){ return null; } }
+
 const log = (text) => {
-  const area = $('logArea');
-  const t = document.createElement('div');
-  t.textContent = `${new Date().toLocaleString()} — ${text}`;
-  area.prepend(t);
+  try {
+    const area = $('logArea');
+    if (!area) {
+      // fallback console
+      console.log('[LOG]', text);
+      return;
+    }
+    const t = document.createElement('div');
+    t.textContent = `${new Date().toLocaleString()} — ${text}`;
+    area.prepend(t);
+  } catch (e) {
+    console.log('[LOG-ERR]', e, text);
+  }
 };
 
-// ==========================
-//  State
-// ==========================
-let map, marker;
-let currentCoords = null;
-let sosTimer = null;        // cancelable timer
-let sosInProgress = false;
+// safe JSON parse
+function safeParse(raw, fallback = []) {
+  try { return JSON.parse(raw); } catch (e) { return fallback; }
+}
 
-// ==========================
-//  MAP SETUP
-// ==========================
-function initMap() {
-  map = L.map('map').setView([20.5937, 78.9629], 5);
-  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    maxZoom: 19
-  }).addTo(map);
+// sanitize for rendering
+function escapeHtml(str = '') {
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/"/g, '&quot;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;');
 }
 
 // ==========================
-//  GET LOCATION (PROMISE)
+//  STATE
+// ==========================
+const CONTACTS_KEY = 'safe_contacts';
+let map = null;
+let marker = null;
+let currentCoords = null;
+let sosTimer = null;
+let sosInProgress = false;
+
+// ==========================
+//  MAP
+// ==========================
+function initMap() {
+  try {
+    if (!qsel('#map')) return;
+    map = L.map('map').setView([20.5937, 78.9629], 5);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 }).addTo(map);
+  } catch (e) {
+    console.warn('initMap error', e);
+  }
+}
+
+// ==========================
+//  GEOLOCATION
 // ==========================
 function shareLocation(showOnMap = true) {
   return new Promise((resolve) => {
@@ -53,21 +82,18 @@ function shareLocation(showOnMap = true) {
       log('Geolocation not supported');
       return resolve(null);
     }
-
     navigator.geolocation.getCurrentPosition(
       pos => {
         const { latitude, longitude } = pos.coords;
         currentCoords = { lat: latitude, lon: longitude };
-
-        $('coords').textContent = `Location: ${latitude.toFixed(5)}, ${longitude.toFixed(5)}`;
+        const coordsEl = $('coords');
+        if (coordsEl) coordsEl.textContent = `Location: ${latitude.toFixed(5)}, ${longitude.toFixed(5)}`;
         log('Location shared');
-
-        if (showOnMap) {
+        if (showOnMap && map) {
           if (marker) map.removeLayer(marker);
           marker = L.marker([latitude, longitude]).addTo(map).bindPopup('You are here').openPopup();
           map.setView([latitude, longitude], 16);
         }
-
         resolve(currentCoords);
       },
       err => {
@@ -81,40 +107,35 @@ function shareLocation(showOnMap = true) {
 }
 
 // ==========================
-//  ALARM
+//  ALARM AUDIO
 // ==========================
 function playAlarm() {
-  const audio = $('alarmAudio');
-  audio.currentTime = 0;
-  audio.play().catch(() => {});
-  log('Alarm sounded');
+  try {
+    const audio = $('alarmAudio');
+    if (audio) { audio.currentTime = 0; audio.play().catch(()=>{}); }
+    log('Alarm sounded');
+  } catch(e){ console.warn(e); }
 }
 function stopAlarm() {
-  const audio = $('alarmAudio');
-  audio.pause();
-  audio.currentTime = 0;
+  try { const audio = $('alarmAudio'); if (audio) { audio.pause(); audio.currentTime = 0; } } catch(e){}
 }
 
 // ==========================
-//  CONTACTS MANAGEMENT
+//  CONTACTS (localStorage)
 // ==========================
-const CONTACTS_KEY = 'safe_contacts';
-
 function loadContacts() {
   const raw = localStorage.getItem(CONTACTS_KEY);
-  return raw ? JSON.parse(raw) : [];
+  return raw ? safeParse(raw, []) : [];
 }
-
 function saveContacts(list) {
   localStorage.setItem(CONTACTS_KEY, JSON.stringify(list));
   renderContacts();
 }
-
 function renderContacts() {
   const ul = $('contactsList');
+  if (!ul) return;
   ul.innerHTML = '';
   const list = loadContacts();
-
   list.forEach((c, i) => {
     const li = document.createElement('li');
     li.innerHTML = `
@@ -129,154 +150,139 @@ function renderContacts() {
     `;
     ul.appendChild(li);
   });
-
-  document.querySelectorAll('.removeBtn').forEach(btn => {
-    btn.onclick = e => {
+  Array.from(document.getElementsByClassName('removeBtn')).forEach(btn=>{
+    btn.onclick = (e) => {
       const i = Number(e.target.dataset.i);
       const l = loadContacts();
-      l.splice(i, 1);
+      l.splice(i,1);
       saveContacts(l);
       log('Contact removed');
     };
   });
 }
 
-// small helper to avoid accidental HTML injection in rendered values
-function escapeHtml(str = '') {
-  return String(str)
-    .replace(/&/g, '&amp;')
-    .replace(/"/g, '&quot;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;');
-}
-
 // ==========================
-//  TRIGGER CALLS (Netlify -> Twilio)
+//  CALL TRIGGER (Netlify function -> Twilio)
 // ==========================
-async function triggerCalls(phoneRecipients, currentCoordsParam) {
+async function triggerCalls(phoneRecipients = [], currentCoordsParam = null) {
   if (!phoneRecipients || phoneRecipients.length === 0) {
     log('No phone numbers to call');
     return { ok: false, error: 'no recipients' };
   }
-
   try {
+    const body = {
+      to: phoneRecipients,
+      message: `I need help. Location: ${currentCoordsParam ? currentCoordsParam.lat + ',' + currentCoordsParam.lon : 'Not available'}`,
+      from_name: 'SafeWave User'
+    };
     const resp = await fetch(CALL_FUNCTION_URL, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        to: phoneRecipients,
-        message: `I need help. Location: ${currentCoordsParam ? currentCoordsParam.lat + ',' + currentCoordsParam.lon : 'Not available'}`,
-        from_name: 'SafeWave User'
-      })
+      body: JSON.stringify(body)
     });
-
-    // handle non-JSON or bad responses gracefully
-    let json;
-    try { json = await resp.json(); } catch (e) { json = null; }
-
+    const json = await resp.json().catch(()=>({}));
     if (resp.ok) {
       log(`Call requests sent to ${phoneRecipients.length} number(s)`);
-      return json || { ok: true };
+      return json;
     } else {
-      // Friendly error messages for common failure modes
-      const bodyError = (json && json.error) ? json.error : `HTTP ${resp.status}`;
-      log('Call function returned error: ' + bodyError);
-
-      // Common helpful guidance
-      if (resp.status === 403 || /Origin not allowed/i.test(bodyError)) {
-        const origin = location.origin;
-        log(`CORS/Origin issue. Ensure the Netlify env var ALLOWED_ORIGIN on the function host includes: ${origin}`);
-      }
-
-      return json || { ok: false, error: bodyError };
+      log('Call function returned error: ' + (json.error || resp.status));
+      return json;
     }
   } catch (err) {
     console.error('Call error', err);
     log('Call request failed: see console');
-    return { ok: false, error: err.message || String(err) };
+    return { ok: false, error: err.message || err };
   }
 }
 
 // ==========================
-//  SOS FLOW
+//  SOS SEQUENCE
 // ==========================
 async function performAlertSequence() {
-  // 1) Wait for location (already done prior to calling this in most flows, but ensure)
+  // share location first
   await shareLocation(true);
-
-  // 2) Play alarm (visual + audio)
+  // alarm
   playAlarm();
 
-  // 3) Email
-  const contacts = loadContacts();
-  let emails = contacts.map(c => c.email).filter(Boolean);
-  if (emails.length) {
-    const emailsStr = emails.join(',');
-    const template_params = {
-      to_email: emailsStr,
-      from_name: 'SafeWave User',
-      message: 'I need help. Please reach out as soon as possible.',
-      lat: currentCoords ? currentCoords.lat : 'Not available',
-      lon: currentCoords ? currentCoords.lon : 'Not available',
-      time: new Date().toLocaleString()
-    };
-
-    try {
-      await emailjs.send('service_hf9wccx', 'template_7wjlod7', template_params);
-      log('Alert emailed to contacts: ' + emailsStr);
-    } catch (err) {
-      console.error('EmailJS error', err);
-      log('Email send failed');
-    }
-  } else {
-    log('No emails saved to notify');
-  }
-
-  // 4) Calls (Twilio via Netlify function) - phone numbers in E.164
-  const phoneRecipients = contacts.map(c => c.phone).filter(Boolean);
-  if (phoneRecipients.length) {
-    const callResult = await triggerCalls(phoneRecipients, currentCoords);
-    if (callResult && callResult.ok) {
-      log('Call(s) initiated successfully');
+  // email via EmailJS if configured
+  try {
+    const contacts = loadContacts();
+    const emails = contacts.map(c => c.email).filter(Boolean);
+    if (emails.length && window.emailjs) {
+      const emailsStr = emails.join(',');
+      const template_params = {
+        to_email: emailsStr,
+        from_name: 'SafeWave User',
+        message: 'I need help. Please reach out as soon as possible.',
+        lat: currentCoords ? currentCoords.lat : 'Not available',
+        lon: currentCoords ? currentCoords.lon : 'Not available',
+        time: new Date().toLocaleString()
+      };
+      try {
+        await emailjs.send('service_hf9wccx','template_7wjlod7', template_params);
+        log('Alert emailed to: ' + emailsStr);
+      } catch (err) {
+        console.error('EmailJS send error', err);
+        log('Alert email failed');
+      }
     } else {
-      log('Call(s) failed: ' + (callResult && callResult.error ? callResult.error : 'unknown'));
+      log('No emails configured or EmailJS not available');
     }
-  } else {
-    log('No phone numbers saved to call');
-  }
+  } catch (e){ console.error(e); }
 
-  // 5) Final log entry
+  // phone calls
+  try {
+    const contacts = loadContacts();
+    const phoneRecipients = contacts.map(c => c.phone).filter(Boolean);
+    if (phoneRecipients.length) {
+      const callResult = await triggerCalls(phoneRecipients, currentCoords);
+      if (callResult && callResult.ok) {
+        log('Call(s) initiated successfully');
+      } else {
+        log('Call(s) failed: ' + (callResult && callResult.error ? callResult.error : 'unknown'));
+      }
+    } else {
+      log('No phone numbers saved to call');
+    }
+  } catch (e) { console.error(e); }
+
   log('SOS sequence completed');
 }
 
+// expose performAlertSequence for face detection script
+window.performAlertSequence = performAlertSequence;
+
 // ==========================
-//  CANCELABLE SOS (5s window)
+//  CANCELABLE SOS (5s)
 // ==========================
 function startCancelableSOS() {
   if (sosInProgress) return;
   sosInProgress = true;
-  $('sosBtn').disabled = true;
-  $('cancelBtn').style.display = 'inline-block';
+  const sosBtn = $('sosBtn');
+  const cancelBtn = $('cancelBtn');
+  if (sosBtn) sosBtn.disabled = true;
+  if (cancelBtn) cancelBtn.style.display = 'inline-block';
   log('SOS initiated — you have 5 seconds to cancel');
 
-  // clear any existing timer
   if (sosTimer) clearTimeout(sosTimer);
-
   sosTimer = setTimeout(async () => {
-    $('cancelBtn').style.display = 'none';
-    $('sosBtn').disabled = false;
+    if (cancelBtn) cancelBtn.style.display = 'none';
+    if (sosBtn) sosBtn.disabled = false;
     sosInProgress = false;
     await performAlertSequence();
-  }, 5000); // 5 seconds
+  }, 5000);
 }
+window.startCancelableSOS = startCancelableSOS; // expose so face-rec.js can call it
 
 function cancelSOS() {
   if (!sosInProgress) return;
   clearTimeout(sosTimer);
   sosTimer = null;
   sosInProgress = false;
-  $('sosBtn').disabled = false;
-  $('cancelBtn').style.display = 'none';
+  const sosBtn = $('sosBtn');
+  const cancelBtn = $('cancelBtn');
+  if (sosBtn) sosBtn.disabled = false;
+  if (cancelBtn) cancelBtn.style.display = 'none';
   log('SOS canceled by user');
 }
 
@@ -289,11 +295,7 @@ async function triggerTestCall(number) {
     const resp = await fetch(CALL_FUNCTION_URL, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        to: [number],
-        message: 'Test call from SafeWave',
-        from_name: 'SafeWave Demo'
-      })
+      body: JSON.stringify({ to: [number], message: 'Test call from SafeWave', from_name: 'SafeWave Demo' })
     });
     const json = await resp.json().catch(()=>({}));
     console.log('CALL RESPONSE', json);
@@ -307,59 +309,63 @@ async function triggerTestCall(number) {
 }
 
 // ==========================
-//  MAIN LOGIC (DOM READY)
+//  DOM READY - hookup UI
 // ==========================
 document.addEventListener('DOMContentLoaded', () => {
-  // initialize map and contacts UI
+  // init map & contacts UI
   initMap();
   renderContacts();
 
-  // Contact form submit -> save name, email, phone
-  $('contactForm').onsubmit = e => {
-    e.preventDefault();
-    const name = $('name').value.trim();
-    const email = $('email').value.trim();
-    const phone = $('phone').value.trim();
-
-    // basic validation
-    if (!name) { alert('Please enter name'); return; }
-    if (!phone) { alert('Please enter phone in +countryformat'); return; }
-    // simple E.164-ish check (not exhaustive)
-    if (!/^\+?\d{7,15}$/.test(phone.replace(/\s+/g, ''))) {
-      alert('Please enter a valid phone number with country code (e.g. +919876543210)');
-      return;
-    }
-
-    const list = loadContacts();
-    list.push({ name, email, phone });
-    saveContacts(list);
-
-    $('name').value = '';
-    $('email').value = '';
-    $('phone').value = '';
-
-    log('Contact added: ' + name);
-  };
+  // Contact form
+  const contactForm = $('contactForm');
+  if (contactForm) {
+    contactForm.onsubmit = (e) => {
+      e.preventDefault();
+      const name = $('name') ? $('name').value.trim() : '';
+      const email = $('email') ? $('email').value.trim() : '';
+      const phone = $('phone') ? $('phone').value.trim() : '';
+      if (!name) { alert('Please enter name'); return; }
+      if (!phone) { alert('Please enter phone in +countryformat'); return; }
+      if (!/^\+?\d{7,15}$/.test(phone.replace(/\s+/g, ''))) {
+        alert('Please enter a valid phone number with country code (e.g. +919876543210)');
+        return;
+      }
+      const list = loadContacts();
+      list.push({ name, email, phone });
+      saveContacts(list);
+      if ($('name')) $('name').value = '';
+      if ($('email')) $('email').value = '';
+      if ($('phone')) $('phone').value = '';
+      log('Contact added: ' + name);
+    };
+  }
 
   // Clear contacts
-  $('clearContacts').onclick = () => {
-    if (confirm('Clear all contacts?')) {
-      localStorage.removeItem(CONTACTS_KEY);
-      renderContacts();
-      log('Contacts cleared');
-    }
-  };
+  const clearContactsBtn = $('clearContacts');
+  if (clearContactsBtn) {
+    clearContactsBtn.onclick = () => {
+      if (confirm('Clear all contacts?')) {
+        localStorage.removeItem(CONTACTS_KEY);
+        renderContacts();
+        log('Contacts cleared');
+      }
+    };
+  }
 
-  // Buttons: share location & alarm
-  $('shareLocBtn').onclick = () => shareLocation(true);
-  $('alarmBtn').onclick = () => playAlarm();
+  // basic buttons
+  const shareLocBtn = $('shareLocBtn');
+  if (shareLocBtn) shareLocBtn.onclick = () => shareLocation(true);
+  const alarmBtn = $('alarmBtn');
+  if (alarmBtn) alarmBtn.onclick = () => playAlarm();
 
-  // SOS flow: start cancelable SOS (5s window)
-  $('sosBtn').onclick = () => startCancelableSOS();
-  $('cancelBtn').onclick = () => cancelSOS();
+  // SOS & Cancel buttons
+  const sosBtn = $('sosBtn');
+  if (sosBtn) sosBtn.onclick = () => startCancelableSOS();
+  const cancelBtn = $('cancelBtn');
+  if (cancelBtn) cancelBtn.onclick = () => cancelSOS();
 
-  // Test call button (in header)
-  const testBtn = $('testCallBtn');
+  // Test call button (header); use event only if present
+  const testBtn = $('testCallBtn') || qsel('#testCallBtn');
   if (testBtn) {
     testBtn.onclick = async () => {
       const num = prompt('Enter phone number to test (E.164, e.g. +919876543210):');
@@ -368,14 +374,17 @@ document.addEventListener('DOMContentLoaded', () => {
     };
   }
 
-  // Admin view for logs
-  $('adminBtn').onclick = () => {
-    alert(
-      'Event log:\n\n' +
-        Array.from(document.querySelectorAll('#logArea div'))
-          .map(d => d.textContent)
-          .slice(0, 30)
-          .join('\n')
-    );
-  };
+  // Admin logs button
+  const adminBtn = $('adminBtn') || qsel('#adminBtn');
+  if (adminBtn) {
+    adminBtn.onclick = () => {
+      alert(
+        'Event log:\n\n' +
+          Array.from(document.querySelectorAll('#logArea div')).map(d => d.textContent).slice(0, 30).join('\n')
+      );
+    };
+  }
+
+  // small helpful log
+  log('UI ready');
 });

@@ -1,46 +1,107 @@
 :root{
-  --bg:#0f1724;
-  --card:#0b1220;
-  --accent:#ff4d6d;
-  --muted:#9aa4b2;
-  --glass: rgba(255,255,255,0.03);
+  --bg-1: #0f172a;
+  --glass: rgba(255,255,255,0.06);
+  --muted: #94a3b8;
+  --accent1: #ff6b6b;
+  --accent2: #7c5cff;
+  --accent3: #00d4ff;
+  --card-bg: rgba(255,255,255,0.03);
+  --glass-border: rgba(255,255,255,0.06);
+  --glass-strong: rgba(255,255,255,0.08);
 }
-*{box-sizing:border-box;font-family:Inter,system-ui,Arial;background-repeat:no-repeat}
+
+/* Page */
+html,body{height:100%}
 body{
-  margin:0; background: linear-gradient(180deg,#071426 0%, #081028 100%);
-  color:#e6eef8; min-height:100vh;
+  margin:0;
+  height:100%;
+  font-family:"Poppins",system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial;
+  background: radial-gradient(1200px 500px at 10% 10%, rgba(124,92,255,0.12), transparent),
+              radial-gradient(900px 350px at 90% 90%, rgba(0,212,255,0.06), transparent),
+              linear-gradient(180deg, #071025 0%, #071428 40%, #071428 100%);
+  color: #e6eef7;
+  -webkit-font-smoothing:antialiased;
+  -moz-osx-font-smoothing:grayscale;
 }
-.topbar{
-  display:flex; align-items:center; justify-content:space-between;
-  padding:16px 24px; border-bottom:1px solid rgba(255,255,255,0.03);
-}
-.topbar h1{margin:0;font-weight:900;letter-spacing:0.6px}
-.subtitle{font-weight:300;font-size:14px;color:var(--muted);margin-left:8px}
-.container{display:flex;gap:20px;padding:22px;max-width:1100px;margin:18px auto}
-.left{flex:0.9}
-.right{flex:1.1}
-.card{
-  background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
-  padding:18px;border-radius:14px;margin-bottom:16px;box-shadow:0 6px 18px rgba(2,6,23,0.6);
-}
-.sos-card{text-align:center}
-.sos{
-  background: radial-gradient(circle at 20% 10%, #ff7a8a 0%, var(--accent) 60%);
-  border:none;color:white;font-weight:900;padding:26px 36px;border-radius:12px;font-size:28px;
-  box-shadow:0 8px 30px rgba(255,77,109,0.18); cursor:pointer; position:relative;
-}
-.sos .pulse{display:inline-block;width:12px;height:12px;border-radius:50%;background:#fff;margin-left:8px;opacity:0.9}
-.small{display:flex;gap:8px;justify-content:center;margin-top:14px}
-.smallbtn{background:transparent;border:1px solid rgba(255,255,255,0.06);padding:8px 12px;border-radius:8px;color:var(--muted);cursor:pointer}
-.row{display:flex;gap:10px}
-input{width:100%;padding:10px;margin:8px 0;border-radius:8px;border:none;background:var(--glass);color:#e6eef8}
-button{cursor:pointer}
-.ghost{background:transparent;border:1px solid rgba(255,255,255,0.06);padding:8px 10px;border-radius:8px;color:var(--muted)}
-#contactsList{list-style:none;padding:0;margin:10px 0;max-height:140px;overflow:auto}
-#contactsList li{display:flex;justify-content:space-between;padding:8px;border-radius:8px;background:rgba(255,255,255,0.01);margin-bottom:6px}
-.logArea{min-height:60px;max-height:150px;overflow:auto;background:rgba(0,0,0,0.12);padding:10px;border-radius:8px;color:var(--muted)}
+
+/* Container */
+.wrap{max-width:1200px;margin:28px auto;padding:24px;display:grid;grid-template-columns: 420px 1fr;gap:22px;align-items:start}
+
+/* Header */
+header.sitebar{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:12px}
+.brand{display:flex;gap:12px;align-items:center;}
+.logo{width:56px;height:56px;border-radius:14px;background: linear-gradient(135deg,var(--accent1),var(--accent2));display:flex;align-items:center;justify-content:center;box-shadow: 0 8px 30px rgba(124,92,255,0.18), inset 0 -6px 18px rgba(0,0,0,0.15);font-weight:700;font-family:"Playfair Display",serif;font-size:18px;color:white}
+.brand h1{margin:0;font-size:18px;font-weight:700}
+.brand p{margin:0;font-size:12px;color:var(--muted)}
+.top-actions{display:flex;gap:10px;align-items:center}
+.icon-btn{background:transparent;border:1px solid rgba(255,255,255,0.04);padding:10px;border-radius:10px;color:var(--muted);cursor:pointer}
+.icon-btn:hover{transform:translateY(-3px);box-shadow:0 8px 30px rgba(0,0,0,0.35)}
+
+/* Left column cards */
+.panel{background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));border:1px solid var(--glass-border);backdrop-filter: blur(8px);border-radius:14px;padding:18px;box-shadow: 0 10px 30px rgba(2,6,23,0.6)}
 .muted{color:var(--muted);font-size:13px}
-.footer{text-align:center;padding:18px;color:var(--muted)}
-@media (max-width:900px){
-  .container{flex-direction:column;padding:16px}
+
+/* SOS card */
+.sos-card h2{margin:0 0 6px 0;font-size:18px}
+.sos-wrap{display:flex;flex-direction:column;gap:12px}
+.sos-btn{display:inline-flex;align-items:center;gap:12px;background: linear-gradient(90deg,var(--accent1),#ff9f80);border:none;padding:16px 20px;border-radius:12px;color:white;font-weight:700;font-size:20px;box-shadow: 0 18px 40px rgba(255,106,106,0.12), 0 6px 20px rgba(0,0,0,0.4);cursor:pointer;transition:transform .15s ease, box-shadow .15s ease;}
+.sos-btn .dot{width:12px;height:12px;border-radius:50%;background:#fff;box-shadow:0 6px 18px rgba(255,255,255,0.14)}
+.sos-btn:active{transform:scale(.98)}
+.sos-controls{display:flex;gap:8px;align-items:center}
+
+/* Contacts card */
+.contacts-grid{display:flex;flex-direction:column;gap:12px}
+.contact-form-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+label{font-size:12px;color:var(--muted);display:block;margin-top:6px}
+.input{background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));border:1px solid rgba(255,255,255,0.04);padding:10px;border-radius:10px;color:#eef7ff}
+.btn-primary{background:linear-gradient(90deg,var(--accent2),var(--accent3));border:none;padding:10px 14px;border-radius:10px;color:white;cursor:pointer}
+.btn-ghost{background:transparent;border:1px solid rgba(255,255,255,0.04);color:var(--muted);padding:10px;border-radius:10px;cursor:pointer}
+
+ul#contactsList{list-style:none;padding:0;margin:8px 0;display:flex;flex-direction:column;gap:8px;}
+ul#contactsList li{display:flex;align-items:center;justify-content:space-between;padding:12px;border-radius:10px;border:1px solid rgba(255,255,255,0.03);background:linear-gradient(180deg, rgba(255,255,255,0.01), transparent)}
+.contact-meta{display:flex;flex-direction:column}
+.contact-meta .name{font-weight:600;color:#fff}
+.contact-meta .sub{color:var(--muted);font-size:13px;margin-top:4px}
+
+/* Right column */
+.right-col{display:grid;grid-template-rows:1fr auto;gap:16px}
+#map{height:420px;border-radius:12px;border:1px solid rgba(255,255,255,0.04);overflow:hidden}
+.logArea{max-height:220px;overflow:auto;padding:12px;background:linear-gradient(180deg,rgba(255,255,255,0.01),transparent);border-radius:10px;border:1px solid rgba(255,255,255,0.03);font-size:13px;color:var(--muted)}
+
+/* footer */
+footer{margin-top:12px;text-align:center;color:var(--muted);font-size:13px}
+
+/* small responsive */
+@media (max-width:980px){
+  .wrap{grid-template-columns:1fr; padding:18px}
+  #map{height:300px}
+}
+
+/* subtle animations */
+.pulse {display:inline-block;width:8px;height:8px;border-radius:50%;background:rgba(255,255,255,0.95); box-shadow:0 0 0 6px rgba(255,107,107,0.12);animation: pulse 1.6s infinite}
+@keyframes pulse {0% { transform:scale(.95); opacity:1 }70% { transform:scale(1.6); opacity:0 }100% { transform:scale(.95); opacity:0 }}
+
+/* focus outlines */
+.input:focus{outline:none;box-shadow:0 8px 30px rgba(124,92,255,0.06);border-color:rgba(124,92,255,0.6)}
+.btn-primary:focus{outline:none;box-shadow:0 10px 30px rgba(124,92,255,0.12)}
+
+
+/* detector container styling */
+.detector-container{
+  width: 100%;
+  height: 320px;         /* match the map height or desired size */
+  background: #000;
+  border-radius: 10px;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* video element is set in JS to object-fit: cover; it will fill container */
+#faceVideo {
+  width: 100%;
+  height: 100%;
+  display: block;
+  transform: scaleX(1); /* flip if you want mirror: scaleX(-1) */
 }
